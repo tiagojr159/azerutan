@@ -623,8 +623,8 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                         $fotoOrig   = $campoColaborador['foto'] ?? '';
                         $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
 
-                        $urlResize  = $path_imagem_projeto . ltrim($fotoResize, '/');
-                        $urlOrig    = $path_imagem_projeto . ltrim($fotoOrig,   '/');
+                        $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
+                        $urlOrig    = $link_imagem_projeto . ltrim($fotoOrig,   '/');
 
                         // checa existência online
                         $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
