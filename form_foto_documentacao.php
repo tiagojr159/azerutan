@@ -37,10 +37,10 @@ if (isset($_POST['acao']) && $_POST['acao'] == "cadastrar") {
     $time = time();
     if (in_array(strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION)), array('txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xlms'))) {
         $photo = arquivoPDF($foto, $baseDir, $link_arquivo);
-        $link_arquivo = $link_imagem_projeto . "upload_pic/" . $photo;
+        $link_arquivo = $path_imagem_projeto .  $photo;
     } else {
-        redimensionar($foto, 800, $link_imagem_projeto . "upload_pic", "$ano/resize_", $time);
-        $photo = redimensionar($foto, 150, $link_imagem_projeto . "upload_pic", "$ano/thumbnail_", $time);
+        redimensionar($foto, 800, $path_imagem_projeto . "upload_pic", "$ano/resize_", $time);
+        $photo = redimensionar($foto, 150, $path_imagem_projeto . "", "$ano/thumbnail_", $time);
         $foto = str_replace('thumbnail', 'resize', $photo);
         $link_arquivo = $link_imagem_projeto . "upload_pic/" . $foto;
     }
@@ -100,13 +100,13 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
     die();
 }
 
-function arquivoPDF($foto, $baseDir, $link_imagem_projeto)
+function arquivoPDF($foto, $baseDir, $path_imagem_projeto)
 {
     $ano = date('Y');
     $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
     $name = strtotime(date('Y-m-d H:i:s'));
     $baseDir = dirname(__DIR__);
-    $upload_dir = $link_imagem_projeto . "upload_pic/$ano/";
+    $upload_dir = $path_imagem_projeto . "$ano/";
     if (!file_exists($upload_dir)) {
         mkdir($upload_dir, 0775, true);
     }
@@ -586,9 +586,6 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                         return false;
                     }
 
-                    //$baseUpload = 'https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/';
-                    //$baseIcones = 'https://paixaodecristodeigarassu.ki6.com.br/projeto/images/icone/';
-
                     $sqlFotos = "SELECT * FROM foto_colaborador WHERE id_colaborador = {$id_colaborador} ORDER BY id DESC LIMIT 50";
                     $consulta2 = mysqli_query($conn, $sqlFotos);
 
@@ -609,8 +606,8 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                             }
 
                             $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
-                            $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
-                            $urlOrig    = $link_imagem_projeto . ltrim($fotoOrig, '/');
+                            $urlResize  = $path_imagem_projeto . ltrim($fotoResize, '/');
+                            $urlOrig    = $path_imagem_projeto . ltrim($fotoOrig, '/');
 
                             $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
 
@@ -626,8 +623,8 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                         $fotoOrig   = $campoColaborador['foto'] ?? '';
                         $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
 
-                        $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
-                        $urlOrig    = $link_imagem_projeto . ltrim($fotoOrig,   '/');
+                        $urlResize  = $path_imagem_projeto . ltrim($fotoResize, '/');
+                        $urlOrig    = $path_imagem_projeto . ltrim($fotoOrig,   '/');
 
                         // checa existência online
                         $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');

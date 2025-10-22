@@ -1,6 +1,6 @@
 config.php
 config/log.txt
-**log/
+log/
 *.log
 *.cache
 *.tmp
