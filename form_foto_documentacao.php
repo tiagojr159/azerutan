@@ -39,7 +39,7 @@ if (isset($_POST['acao']) && $_POST['acao'] == "cadastrar") {
         $photo = arquivoPDF($foto, $baseDir, $link_arquivo);
         $link_arquivo = $path_imagem_projeto .  $photo;
     } else {
-        redimensionar($foto, 800, $path_imagem_projeto . "upload_pic", "$ano/resize_", $time);
+        redimensionar($foto, 800, $path_imagem_projeto . "", "$ano/resize_", $time);
         $photo = redimensionar($foto, 150, $path_imagem_projeto . "", "$ano/thumbnail_", $time);
         $foto = str_replace('thumbnail', 'resize', $photo);
         $link_arquivo = $link_imagem_projeto . "upload_pic/" . $foto;
@@ -623,8 +623,8 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                         $fotoOrig   = $campoColaborador['foto'] ?? '';
                         $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
 
-                        $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
-                        $urlOrig    = $link_imagem_projeto . ltrim($fotoOrig,   '/');
+                        $urlResize  = $path_imagem_projeto . ltrim($fotoResize, '/');
+                        $urlOrig    = $path_imagem_projeto . ltrim($fotoOrig,   '/');
 
                         // checa existência online
                         $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
@@ -640,7 +640,7 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                                 // válido por 10 minutos
                                 if ($diffMinutos < 10) {
                                     $restantes = 10 - $diffMinutos;
-                                    echo "<img src='" . htmlspecialchars($urlValida, ENT_QUOTES) . "' data-toggle='tooltip' data-placement='top' title='A foto ficará disponível por {$restantes} minuto(s).' alt='Foto Temporária'>";
+                                    echo "<img src='" . $link_imagem_projeto . "" . $fotoResize . "' data-toggle='tooltip' data-placement='top' title='A foto ficarÃ¡ disponÃ­vel por {$restantes} minuto(s).' alt='Foto TemporÃ¡ria'>";
                                 } else {
                                     echo "<img src='{$baseIcones}51265.png' alt='Foto Expirada'>";
                                 }
@@ -656,7 +656,7 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
 
                 <h1 class="display-3 text-center mt-4">Realização</h1>
                 <p class="text-center">
-                    <img src="<?php echo $link_imagem_projeto?>images/azerutan2023.jpg" style="max-width: 40%;" alt="Azerutan 2023">
+                    <img src="<?php echo $link_imagem_projeto ?>images/azerutan2023.jpg" style="max-width: 40%;" alt="Azerutan 2023">
                 </p>
             </div>
         </div>
