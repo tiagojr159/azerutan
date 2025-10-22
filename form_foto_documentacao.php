@@ -6,6 +6,7 @@
  * ou desagrado do nosso senhor Jesus Cristo. Amém.  
  * 
  * Tiago Junior - 31/08/2014
+ * form_foto_documentacao.php
  */
 
 $dateAno = date('Y');
@@ -101,8 +102,13 @@ function arquivoPDF($foto) {
     $ano = date('Y');
     $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
     $name = strtotime(date('Y-m-d H:i:s'));
-    $uploadfile = "https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/" . $ano . "/" . $name . "." . $extensao;
-    move_uploaded_file($foto['tmp_name'], $uploadfile);
+    $upload_dir = "/home3/ki6com20/paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/$ano/";
+if (!file_exists($upload_dir)) {
+    mkdir($upload_dir, 0775, true);
+}
+$uploadfile = $upload_dir . $name . "." . $extensao;
+move_uploaded_file($foto['tmp_name'], $uploadfile);
+
     return $ano . "/" . $name . "." . $extensao;
 }
 
