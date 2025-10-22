@@ -12,6 +12,8 @@
 $dateAno = date('Y');
 require_once 'config/conexao.class.php';
 require_once 'config/crud.class.php';
+require_once 'config.php';
+
 date_default_timezone_set('America/Sao_Paulo');
 error_reporting(0);
 $con = new conexao();
@@ -34,13 +36,13 @@ if (isset($_POST['acao']) && $_POST['acao'] == "cadastrar") {
     $tipo = $_POST['tipo'];
     $time = time();
     if (in_array(strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION)), array('txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xlms'))) {
-        $photo = arquivoPDF($foto);
-        $link_arquivo = "https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/" . $photo;
+        $photo = arquivoPDF($foto, $baseDir, $link_arquivo);
+        $link_arquivo = $link_imagem_projeto . "upload_pic/" . $photo;
     } else {
-        redimensionar($foto, 800, "https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic", "$ano/resize_", $time);
-        $photo = redimensionar($foto, 150, "https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic", "$ano/thumbnail_", $time);
+        redimensionar($foto, 800, $link_imagem_projeto . "upload_pic", "$ano/resize_", $time);
+        $photo = redimensionar($foto, 150, $link_imagem_projeto . "upload_pic", "$ano/thumbnail_", $time);
         $foto = str_replace('thumbnail', 'resize', $photo);
-        $link_arquivo = "https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/" . $foto;
+        $link_arquivo = $link_imagem_projeto . "upload_pic/" . $foto;
     }
     $crud = new crud('foto_colaborador');
     $crud->inserir("id_colaborador,foto,tipo,tamanho", "'$id_colaborador','$photo','$tipo',350");
@@ -98,21 +100,24 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
     die();
 }
 
-function arquivoPDF($foto) {
+function arquivoPDF($foto, $baseDir, $link_imagem_projeto)
+{
     $ano = date('Y');
     $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
     $name = strtotime(date('Y-m-d H:i:s'));
-    $upload_dir = "/home3/ki6com20/paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/$ano/";
-if (!file_exists($upload_dir)) {
-    mkdir($upload_dir, 0775, true);
-}
-$uploadfile = $upload_dir . $name . "." . $extensao;
-move_uploaded_file($foto['tmp_name'], $uploadfile);
+    $baseDir = dirname(__DIR__);
+    $upload_dir = $link_imagem_projeto . "upload_pic/$ano/";
+    if (!file_exists($upload_dir)) {
+        mkdir($upload_dir, 0775, true);
+    }
+    $uploadfile = $upload_dir . $name . "." . $extensao;
+    move_uploaded_file($foto['tmp_name'], $uploadfile);
 
     return $ano . "/" . $name . "." . $extensao;
 }
 
-function Redimensionar($imagem, $largura, $pasta, $nomeArquivo, $time) {
+function Redimensionar($imagem, $largura, $pasta, $nomeArquivo, $time)
+{
     $extensao = strtolower(pathinfo($imagem['name'], PATHINFO_EXTENSION));
     switch ($extensao) {
         case "jpeg":
@@ -161,6 +166,7 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -198,7 +204,8 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
             background-color: var(--forest-green);
         }
 
-        .navbar-brand, .nav-link {
+        .navbar-brand,
+        .nav-link {
             color: var(--white) !important;
         }
 
@@ -338,6 +345,7 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container-fluid">
@@ -411,7 +419,7 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                         if ($id_campo == 1 && $pendencia == 1) {
                             $botao = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                    ?>
                             <div class="form-group">
                                 <span class="status-pendente"><b>FALTA ATUALIZAR O ETNIA</b>*</span>
                                 <select name="raca" class="form-control">
@@ -424,12 +432,12 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                                     <option value="NÃO INFORMARDO">NÃO INFORMAR</option>
                                 </select>
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 2 && $pendencia == 1) {
                             $botao = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente"><b>FALTA ATUALIZAR O GÊNERO</b>*</span>
                                 <select name="sexo" class="form-control">
@@ -440,70 +448,70 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                                     <option value="Não Informado">Não Informar</option>
                                 </select>
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 3 && $pendencia == 1) {
                             $botao = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente"><b>FALTA ATUALIZAR O WHATSAPP</b>*</span>
                                 <input type="text" name="telefone" maxlength="15" onkeyup="handlePhone(event)" class="form-control" />
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 4 && $pendencia == 1) {
                             $botao = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente"><b>FALTA ATUALIZAR O CELULAR</b>*</span>
                                 <input type="text" name="celular" maxlength="15" onkeyup="handlePhone(event)" class="form-control" />
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 5 && $pendencia == 1) {
                             $arquivo = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente">Falta Foto do Perfil</span>
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 6 && $pendencia == 1) {
                             $arquivo = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente">Falta Foto do Comprovante de Residência até 3 meses</span>
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 7 && $pendencia == 1) {
                             $arquivo = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente">Falta Foto da Identidade/CNH</span>
                             </div>
-                            <?php
+                        <?php
                         }
                         if ($id_campo == 8 && $pendencia == 1) {
                             $arquivo = 1;
                             $pendenciaAzul = 1;
-                            ?>
+                        ?>
                             <div class="form-group">
                                 <span class="status-pendente">Falta Foto do CPF</span>
                             </div>
-                            <?php
+                        <?php
                         }
                     }
                     if ($botao == 1) {
                         $arquivo = 0;
                         ?>
                         <button type="button" class="btn btn-primary" id="btnAtualizarDados">Atualizar Dados</button>
-                        <?php
+                    <?php
                     }
                     ?>
                 </form>
@@ -511,7 +519,9 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                 <?php if ($pendenciaAzul == 0) { ?>
                     <div class="form-group">
                         <span class="status-ok" style="display: block; text-align: center;">Prezado Colaborador(a): <b><?php echo $Colaborador2['nome']; ?></b>, Você não tem Pendência de Envio de Documentação.</span>
-                        <script type="text/javascript">falar('Você não tem Pendência de Envio de Documentação.');</script>
+                        <script type="text/javascript">
+                            falar('Você não tem Pendência de Envio de Documentação.');
+                        </script>
                     </div>
                 <?php } ?>
 
@@ -545,99 +555,111 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
                 <?php } ?>
 
                 <div class="image-gallery">
-              <?php
-// use a conexão já aberta
-$conn = $con->connect();
-if (!$conn) {
-    die('Erro ao conectar ao banco de dados: ' . $con->getError());
-}
+                    <?php
+                    // use a conexão já aberta
+                    $conn = $con->connect();
+                    if (!$conn) {
+                        die('Erro ao conectar ao banco de dados: ' . $con->getError());
+                    }
 
-// segurança básica no id
-$id_colaborador = (int) $id_colaborador;
+                    // segurança básica no id
+                    $id_colaborador = (int) $id_colaborador;
 
-function urlExiste200(string $url): bool {
-    // verifica headers; aceita qualquer linha com 200 OK (mesmo após redirecionamentos)
-    $headers = @get_headers($url, 1);
-    if (!$headers) return false;
+                    function urlExiste200(string $url): bool
+                    {
+                        // verifica headers; aceita qualquer linha com 200 OK (mesmo após redirecionamentos)
+                        $headers = @get_headers($url, 1);
+                        if (!$headers) return false;
 
-    // pode vir uma string única ou array em redirecionamentos
-    if (is_array($headers)) {
-        foreach ($headers as $k => $v) {
-            if (is_string($k) && stripos($k, 'HTTP/') === 0) { // segurança
-                if (is_string($v) && strpos($v, '200') !== false) return true;
-            }
-            if (is_int($k) && is_string($v) && strpos($v, '200') !== false) return true;
-        }
-    } else {
-        // fallback
-        return strpos($headers[0] ?? '', '200') !== false;
-    }
-    return false;
-}
+                        // pode vir uma string única ou array em redirecionamentos
+                        if (is_array($headers)) {
+                            foreach ($headers as $k => $v) {
+                                if (is_string($k) && stripos($k, 'HTTP/') === 0) { // segurança
+                                    if (is_string($v) && strpos($v, '200') !== false) return true;
+                                }
+                                if (is_int($k) && is_string($v) && strpos($v, '200') !== false) return true;
+                            }
+                        } else {
+                            // fallback
+                            return strpos($headers[0] ?? '', '200') !== false;
+                        }
+                        return false;
+                    }
 
-$baseUpload = 'https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/';
-$baseIcones = 'https://paixaodecristodeigarassu.ki6.com.br/projeto/images/icone/';
+                    //$baseUpload = 'https://paixaodecristodeigarassu.ki6.com.br/projeto/upload_pic/';
+                    //$baseIcones = 'https://paixaodecristodeigarassu.ki6.com.br/projeto/images/icone/';
 
-$sqlFotos = "SELECT * FROM foto_colaborador WHERE id_colaborador = {$id_colaborador} ORDER BY id DESC LIMIT 50";
-$consulta2 = mysqli_query($conn, $sqlFotos);
+                    $sqlFotos = "SELECT * FROM foto_colaborador WHERE id_colaborador = {$id_colaborador} ORDER BY id DESC LIMIT 50";
+                    $consulta2 = mysqli_query($conn, $sqlFotos);
 
-while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
-    $dataDateTime  = new DateTime($campoColaborador['data']);
-    $agoraDateTime = new DateTime();
+                    while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
+                        $dataDateTime  = new DateTime($campoColaborador['data']);
+                        $agoraDateTime = new DateTime();
 
-    // diferença total em minutos (evita usar ->i que é só o minuto do relógio)
-    $diffSegundos = $agoraDateTime->getTimestamp() - $dataDateTime->getTimestamp();
-    $diffMinutos  = (int) floor($diffSegundos / 60);
+                        // diferença total em minutos (evita usar ->i que é só o minuto do relógio)
+                        $diffSegundos = $agoraDateTime->getTimestamp() - $dataDateTime->getTimestamp();
+                        $diffMinutos  = (int) floor($diffSegundos / 60);
 
-    if ($campoColaborador['tipo'] === 'P') {
-        // foto de perfil direta
-        $urlFotoPerfil = $baseUpload . ltrim($campoColaborador['foto'], '/');
-        if (urlExiste200($urlFotoPerfil)) {
-            echo "<img src='" . htmlspecialchars($urlFotoPerfil, ENT_QUOTES) . "' alt='Foto Perfil'>";
-        } else {
-            echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
-        }
-        continue;
-    }
+                        if ($campoColaborador['tipo'] === 'P') {
+                            // verifica existência do arquivo antes de exibir
+                            $fotoOrig = $campoColaborador['foto'] ?? '';
+                            if ($fotoOrig === '') {
+                                echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
+                                continue;
+                            }
 
-    // outras fotos: usar a versão "resize" quando existir
-    $fotoOrig   = $campoColaborador['foto'] ?? '';
-    $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
+                            $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
+                            $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
+                            $urlOrig    = $link_imagem_projeto . ltrim($fotoOrig, '/');
 
-    $urlResize  = $baseUpload . ltrim($fotoResize, '/');
-    $urlOrig    = $baseUpload . ltrim($fotoOrig,   '/');
+                            $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
 
-    // checa existência online
-    $urlValida = urlExiste200($urlResize) ? $urlResize : (urlExiste200($urlOrig) ? $urlOrig : '');
+                            if ($urlValida) {
+                                echo "<img src='" . htmlspecialchars($urlValida, ENT_QUOTES) . "' alt='Foto Perfil'>";
+                            } else {
+                                echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
+                            }
+                            continue;
+                        }
 
-    if ($urlValida) {
-        // extensão segura
-        $ext = strtolower(pathinfo($fotoOrig, PATHINFO_EXTENSION));
+                        // outras fotos: usar a versão "resize" quando existir
+                        $fotoOrig   = $campoColaborador['foto'] ?? '';
+                        $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
 
-        // se for documento, mostra ícone de documento
-        if (in_array($ext, ['txt','pdf','doc','docx','xls','xlsx','ppt','pptx','xlms'], true)) {
-            echo "<img src='{$baseIcones}painelestudante_z.png' alt='Documento'>";
-        } else {
-            // válido por 10 minutos
-            if ($diffMinutos < 10) {
-                $restantes = 10 - $diffMinutos;
-                echo "<img src='" . htmlspecialchars($urlValida, ENT_QUOTES) . "' data-toggle='tooltip' data-placement='top' title='A foto ficará disponível por {$restantes} minuto(s).' alt='Foto Temporária'>";
-            } else {
-                echo "<img src='{$baseIcones}51265.png' alt='Foto Expirada'>";
-            }
-        }
-    } else {
-        // não existe (404 ou outro erro)
-        echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
-    }
-}
-?>
+                        $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
+                        $urlOrig    = $link_imagem_projeto . ltrim($fotoOrig,   '/');
+
+                        // checa existência online
+                        $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
+
+                        if ($urlValida) {
+                            // extensão segura
+                            $ext = strtolower(pathinfo($fotoOrig, PATHINFO_EXTENSION));
+
+                            // se for documento, mostra ícone de documento
+                            if (in_array($ext, ['txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xlms'], true)) {
+                                echo "<img src='{$baseIcones}painelestudante_z.png' alt='Documento'>";
+                            } else {
+                                // válido por 10 minutos
+                                if ($diffMinutos < 10) {
+                                    $restantes = 10 - $diffMinutos;
+                                    echo "<img src='" . htmlspecialchars($urlValida, ENT_QUOTES) . "' data-toggle='tooltip' data-placement='top' title='A foto ficará disponível por {$restantes} minuto(s).' alt='Foto Temporária'>";
+                                } else {
+                                    echo "<img src='{$baseIcones}51265.png' alt='Foto Expirada'>";
+                                }
+                            }
+                        } else {
+                            // não existe (404 ou outro erro)
+                            echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
+                        }
+                    }
+                    ?>
 
                 </div>
 
                 <h1 class="display-3 text-center mt-4">Realização</h1>
                 <p class="text-center">
-                    <img src="https://paixaodecristodeigarassu.ki6.com.br/projeto/images/azerutan2023.jpg" style="max-width: 40%;" alt="Azerutan 2023">
+                    <img src="<?php echo $link_imagem_projeto?>images/azerutan2023.jpg" style="max-width: 40%;" alt="Azerutan 2023">
                 </p>
             </div>
         </div>
@@ -659,7 +681,9 @@ while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
                         <img src="https://www.superiorlawncareusa.com/wp-content/uploads/2020/05/loading-gif-png-5.gif" width="120" alt="Carregando">
                         <p>Aguarde enquanto a foto está sendo carregada.</p>
                         <div id="lbmeuarquivo"></div>
-                        <p><div id="temporizador"></div></p>
+                        <p>
+                        <div id="temporizador"></div>
+                        </p>
                     </center>
                 </div>
                 <div class="modal-footer">
@@ -688,6 +712,7 @@ while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
         }
 
         const tempoInicial = 15;
+
         function falar(qrCodeMessage) {
             const msg = new SpeechSynthesisUtterance();
             msg.volume = 1;
@@ -745,12 +770,12 @@ while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
             }
         }
 
-        $(document).ready(function () {
-            $('#btnEnviar').on('click', async function () {
+        $(document).ready(function() {
+            $('#btnEnviar').on('click', async function() {
                 startTimer();
             });
 
-            $('#btnAtualizarDados').on('click', async function () {
+            $('#btnAtualizarDados').on('click', async function() {
                 let formData = new FormData($('#atualizarCad')[0]);
                 const response = await $.ajax({
                     type: 'POST',
@@ -758,7 +783,7 @@ while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
                     data: formData,
                     processData: false,
                     contentType: false,
-                }).done(function (data) {
+                }).done(function(data) {
                     alert('Foto enviada com sucesso!');
                     location.reload();
                 });
@@ -797,4 +822,5 @@ while ($campoColaborador = mysqli_fetch_assoc($consulta2)) {
         }
     </script>
 </body>
+
 </html>
