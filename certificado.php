@@ -240,67 +240,79 @@ $bgBase64 = base64_encode(file_get_contents($bgPath));
 $bgMime = mime_content_type($bgPath);
 
 $css = <<<CSS
-    @page { margin: 0; }
-   body {
+@page { margin: 0; size: A4 landscape; }
+
+html, body {
     margin: 0;
     padding: 0;
+    width: 297mm;   /* A4 horizontal */
+    height: 210mm;
     background-image: url('data:$bgMime;base64,$bgBase64');
     background-size: cover;
     background-position: center;
     font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-    color:#000;
+    color: #000;
 }
 
 .wrap {
     position: relative;
-    width: 105%;
+    width: 100%;
     height: 100%;
-    text-align: center;
 }
 
+/* Título ou nome do projeto */
 .projeto {
     position: absolute;
-    top: 38%;
+    top: 37%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 34px;
+    font-size: 32px;
     font-weight: 800;
     letter-spacing: 1px;
+    text-align: center;
 }
 
+/* Texto central */
 .detalhes {
     position: absolute;
-    top: 56%;
-    left: 40%;
-    transform: translate(-40%, -50%);
+    top: 54%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 15px;
-    line-height: 1.3;
+    line-height: 1.5;
+    width: 80%;
+    text-align: justify;
 }
 
+/* Rodapé */
 .assinatura {
     position: absolute;
-    bottom: 20%;
-    left: 38%;
+    bottom: 12%;
+    left: 50%;
+    transform: translateX(-50%);
     text-align: center;
-    font-size: 11.5px;
-    line-height: 1.1;
+    font-size: 12px;
+    line-height: 1.2;
 }
 
+/* QR Code */
 .qrcode {
     position: absolute;
-    bottom: 18%;
-    right: 63%;
-    width: 70px;
-    height: 70px;
+    bottom: 12%;
+    right: 6%;
+    width: 90px;
+    height: 90px;
 }
 
 .qrcode-legenda {
     position: absolute;
-    bottom: 9%;
-    right: 7%;
+    bottom: 6%;
+    right: 6%;
     font-size: 10px;
+    text-align: center;
 }
 CSS;
+
 
 // Monta a seção do QR Code
 $qrcodeHtml = '';
@@ -324,10 +336,16 @@ $html = <<<HTML
 <body>
 <div class="wrap">
     <div class="projeto">{$nomeProj}</div>
+
     <div class="detalhes">
-        A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</b> participou do Projeto <b>{$nomeProj}</b>, desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação nas ações de formação e difusão cultural promovidas pela associação.
-        <br>Este certificado é concedido em reconhecimento à sua participação e colaboração nas atividades artísticas e educativas do referido projeto.
+        A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</b> participou do Projeto <b>{$nomeProj}</b>,
+        desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação
+        nas ações de formação e difusão cultural promovidas pela associação.
+        <br><br>
+        Este certificado é concedido em reconhecimento à sua participação e colaboração
+        nas atividades artísticas e educativas do referido projeto.
     </div>
+
     <div class="assinatura">
         <b>{$categoria} - {$papel} - {$anoProj}</b><br>
         Emitido em {$dataHojeBR}<br>
@@ -335,12 +353,14 @@ $html = <<<HTML
         CNPJ: 53.849.215/0001-48<br>
         Igarassu - PE
     </div>
+
     {$qrcodeHtml}
     {$qrcodeLegenda}
 </div>
 </body>
 </html>
 HTML;
+
 
 /* ---------- Renderiza PDF (paisagem) ---------- */
 
