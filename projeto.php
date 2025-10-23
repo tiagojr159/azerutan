@@ -14,6 +14,8 @@ $result = mysqli_query($conn, $sql);
 if (!$result) {
     die("Erro na consulta: " . mysqli_error($conn));
 }
+
+require_once 'header.php';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -25,12 +27,7 @@ if (!$result) {
         content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Paixão de Cristo de Igarassu — Azerutan</title>
 
-    <!-- Bootstrap -->
-
-    <!-- (NOVO) CSS do autocomplete -->
     <link rel="stylesheet" href="styles-autocomplete.css">
-
-
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -39,215 +36,12 @@ if (!$result) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-    <!-- Estilo do layout (paleta reaproveitada) -->
-    <style>
-        :root {
-            --primary: #20b2aa;
-            /* lightseagreen */
-            --primary-700: #17928b;
-            --bg: #f4f7f8;
-            --card: #ffffff;
-            --text: #1b1f23;
-            --muted: #6c757d;
-            --ok: #32cd32;
-            /* limegreen */
-        }
-
-        html,
-        body {
-            height: 100%
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.5;
-        }
-
-        .navbar {
-            background: var(--primary);
-        }
-
-        .navbar .nav-link,
-        .navbar-brand {
-            font-weight: 600
-        }
-
-        .hero {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-700) 100%);
-            color: #fff;
-            border-radius: 1rem;
-            padding: 2rem;
-            margin-top: 5rem;
-        }
-
-        .hero h1 {
-            font-weight: 700;
-            letter-spacing: .2px
-        }
-
-        .hero p {
-            opacity: .95
-        }
-
-        .section-title {
-            font-size: clamp(1.25rem, 1.2rem + .6vw, 1.75rem);
-            font-weight: 700;
-            margin: 1.5rem 0 .75rem;
-            color: var(--primary-700);
-        }
-
-        .card-az {
-            background: var(--card);
-            border: 1px solid #e8ecee;
-            border-radius: 1rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, .04);
-            height: 100%;
-        }
-
-        .card-az .card-header {
-            background: transparent;
-            border-bottom: 1px solid #eef2f3;
-            font-weight: 700;
-            color: var(--primary-700);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-700);
-            border-color: var(--primary-700);
-        }
-
-        .status-chip {
-            font-size: clamp(.95rem, .9rem + .2vw, 1.15rem);
-            color: #fff;
-            background: var(--ok);
-            border-radius: .6rem;
-            padding: .25rem .6rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        /* grade dos projetos (responsivo) */
-        .proj-card {
-            transition: transform .18s ease, box-shadow .18s ease;
-            text-align: center;
-            padding: 1.25rem 1rem;
-        }
-
-        .proj-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 26px rgba(0, 0, 0, .08);
-        }
-
-        .proj-icon {
-            width: 72px;
-            height: 72px;
-            object-fit: contain;
-            margin-bottom: .5rem;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .12));
-        }
-
-        .proj-name {
-            font-weight: 700;
-            margin: .25rem 0 0;
-            font-size: 1.05rem;
-        }
-
-        .proj-cat {
-            font-size: .85rem;
-            color: var(--muted);
-        }
-
-        /* utilidades */
-        .gap-12 {
-            gap: 12px
-        }
-
-        .mt-32 {
-            margin-top: 32px
-        }
-
-        /* ajustes mobile */
-        @media (max-width: 575.98px) {
-            .navbar-brand {
-                font-size: 1.05rem
-            }
-
-            .hero {
-                padding: 1.25rem;
-                margin-top: 4rem
-            }
-
-            .card-az {
-                border-radius: .9rem
-            }
-
-            .proj-icon {
-                width: 64px;
-                height: 64px
-            }
-        }
-
-    </style>
-
-    <!-- (NOVO) jQuery COMPLETO (necessário para autocomplete/AJAX) -->
-    <!-- (NOVO) plugin de autocomplete -->
 </head>
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">Azerutan</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMain"
-                aria-controls="navMain" aria-expanded="false" aria-label="Alternar navegação">
-                <span class="navbar-toggler-icon"></span>
-            </button>
 
-            <div class="collapse navbar-collapse" id="navMain">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="index.php">Início</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" id="drop01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Secretaria
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="drop01">
-                            <a class="dropdown-item" href="inscricao.php?novo=1">Nova Matrícula</a>
-                            <a class="dropdown-item" href="inscricao_renovar.php">Renovar Matrícula</a>
-                            <a class="dropdown-item" href="https://chat.whatsapp.com/CKvK1IcvC0E69CsnXZLtaC" target="_blank" rel="noopener">WhatsApp — Secretaria</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline my-2 my-lg-0">
-                    <input class="form-control mr-2" type="text" placeholder="Pesquisar" aria-label="Pesquisar" />
-                    <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Buscar</button>
-                </form>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Hero -->
     <div class="container">
         <section class="hero">
             <div class="row align-items-center">
@@ -290,26 +84,12 @@ if (!$result) {
     <html lang="pt-br">
 
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">Azerutan</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navMain">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.php">Início</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
     <div class="container mt-5 pt-4">
         <div class="card-az p-4">
             <div class="text-center mb-4">
                 <img width="50%"
-                    src="<?= $link_imagem_projeto; ?><?= $projeto['link_img']; ?>" />
+                    src="<?= $link_imagem_projeto; ?>../<?= $projeto['link_img']; ?>" />
                 <h2 class="mt-2"><?= htmlspecialchars($projeto['nome']); ?></h2>
                 <span class="proj-cat"><?= htmlspecialchars($projeto['categoria']); ?></span>
             </div>
@@ -334,30 +114,28 @@ if (!$result) {
 
 
 
-        <!-- [AJUSTE MÍNIMO] Modal Certificado -->
- <!-- Modal Certificado (único, responsivo) -->
-<!-- Modal Certificado (único, responsivo) -->
-<div class="modal fade" id="modalCertificado" tabindex="-1" aria-labelledby="modalCertificadoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-    <form id="formCertificado" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalCertificadoLabel">Confirmar data de nascimento</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="idColabCert" name="id_colaborador">
-        <input type="hidden" id="idProjCert"  name="id_projeto">
-        <label for="nascimento" class="form-label">Data de nascimento</label>
-        <input type="date" class="form-control" id="nascimento" name="nascimento" required>
-        <small class="text-muted">Informe sua data para liberar o certificado.</small>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Continuar</button>
-      </div>
-    </form>
-  </div>
-</div>
+
+    <div class="modal fade" id="modalCertificado" tabindex="-1" aria-labelledby="modalCertificadoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <form id="formCertificado" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCertificadoLabel">Confirmar data de nascimento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="idColabCert" name="id_colaborador">
+                    <input type="hidden" id="idProjCert" name="id_projeto">
+                    <label for="nascimento" class="form-label">Data de nascimento</label>
+                    <input type="date" class="form-control" id="nascimento" name="nascimento" required>
+                    <small class="text-muted">Informe sua data para liberar o certificado.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Continuar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
 
@@ -956,53 +734,53 @@ if (!$result) {
                 })();
             </script>
 
-           <script>
-// Abre o modal e preenche os IDs do colaborador/projeto
-$(document).on('click', '.btn-certificado', function () {
-  $('#idColabCert').val($(this).data('idcol'));
-  $('#idProjCert').val($(this).data('idproj'));
-  $('#nascimento').val('');
+            <script>
+                // Abre o modal e preenche os IDs do colaborador/projeto
+                $(document).on('click', '.btn-certificado', function() {
+                    $('#idColabCert').val($(this).data('idcol'));
+                    $('#idProjCert').val($(this).data('idproj'));
+                    $('#nascimento').val('');
 
-  // Se precisar abrir programaticamente (além do data-bs-toggle):
-  // const m = new bootstrap.Modal(document.getElementById('modalCertificado'));
-  // m.show();
-});
+                    // Se precisar abrir programaticamente (além do data-bs-toggle):
+                    // const m = new bootstrap.Modal(document.getElementById('modalCertificado'));
+                    // m.show();
+                });
 
-// Intercepta o submit do modal de certificado
-$('#formCertificado').on('submit', function(e) {
-  e.preventDefault(); // ← evita submit para projeto.php
+                // Intercepta o submit do modal de certificado
+                $('#formCertificado').on('submit', function(e) {
+                    e.preventDefault(); // ← evita submit para projeto.php
 
-  const id_colaborador = $('#idColabCert').val();
-  const id_projeto     = $('#idProjCert').val();
-  const nascimento     = $('#nascimento').val(); // YYYY-MM-DD
+                    const id_colaborador = $('#idColabCert').val();
+                    const id_projeto = $('#idProjCert').val();
+                    const nascimento = $('#nascimento').val(); // YYYY-MM-DD
 
-  if (!nascimento) {
-    alert('Informe a data de nascimento.');
-    $('#nascimento').focus();
-    return;
-  }
+                    if (!nascimento) {
+                        alert('Informe a data de nascimento.');
+                        $('#nascimento').focus();
+                        return;
+                    }
 
-  // Validação AJAX no próprio certificado.php
-$.getJSON('certificado.php', {
-  action: 'confirmaNascimento',
-  id_colaborador: id_colaborador,
-  id_projeto: id_projeto,
-  nascimento: $('#nascimento').val() // YYYY-MM-DD
-}).done(function(resp){
-  if (resp.ok) {
-    // Pode incluir nascimento no GET para reforçar a checagem no PHP
-    window.location.href = 'certificado.php?id_colaborador=' + encodeURIComponent(id_colaborador)
-                         + '&id_projeto=' + encodeURIComponent(id_projeto)
-                         + '&nascimento=' + encodeURIComponent($('#nascimento').val());
-  } else {
-    alert(resp.msg || 'Data de nascimento não confere.');
-  }
-}).fail(function(){
-  alert('Falha ao validar a data. Tente novamente.');
-});
+                    // Validação AJAX no próprio certificado.php
+                    $.getJSON('certificado.php', {
+                        action: 'confirmaNascimento',
+                        id_colaborador: id_colaborador,
+                        id_projeto: id_projeto,
+                        nascimento: $('#nascimento').val() // YYYY-MM-DD
+                    }).done(function(resp) {
+                        if (resp.ok) {
+                            // Pode incluir nascimento no GET para reforçar a checagem no PHP
+                            window.location.href = 'certificado.php?id_colaborador=' + encodeURIComponent(id_colaborador) +
+                                '&id_projeto=' + encodeURIComponent(id_projeto) +
+                                '&nascimento=' + encodeURIComponent($('#nascimento').val());
+                        } else {
+                            alert(resp.msg || 'Data de nascimento não confere.');
+                        }
+                    }).fail(function() {
+                        alert('Falha ao validar a data. Tente novamente.');
+                    });
 
-});
-</script>
+                });
+            </script>
 
 
 
