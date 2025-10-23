@@ -64,6 +64,16 @@ include 'header.php';
 						onerror="this.onerror=null;this.src='img/icones/projeto.png';" />
 					<div class="proj-name"><?= htmlspecialchars($row['nome']); ?></div>
 					<div class="proj-cat"><?= htmlspecialchars($row['categoria']); ?></div>
+					<?php
+					$status = strtolower(trim((string)($row['inscricoes_abertas'] ?? '')));
+					$openValues = ['1','true','sim','s','aberto','open','yes','y'];
+					$isOpen = in_array($status, $openValues, true);
+					?>
+					<div class="proj-cat">
+						<span class="<?= $isOpen ? 'text-success' : 'text-danger' ?>">
+							<b><?= $isOpen ? 'ABERTO' : 'FECHADO' ?></b>
+						</span>
+					</div>
 				</a>
 			</div>
 		<?php } ?>

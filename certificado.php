@@ -20,6 +20,22 @@ require_once __DIR__ . '/config/crud.class.php';
 // Dompdf (ajuste o caminho do autoload conforme seu projeto)
 require_once __DIR__ . '/vendor/autoload.php';
 
+
+/* ---------- Gera QR Code em Base64 ---------- */
+/* ---------- Gera QR Code embutido ---------- */
+$linkCertificado = "http://azerutan.ki6.com.br/certificado.php?id_colaborador={$id_colaborador}&id_projeto={$id_projeto}";
+$qrURL = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=" . urlencode($linkCertificado) . "&choe=UTF-8";
+
+// Baixa a imagem do QR Code e converte para Base64
+$qrImage = @file_get_contents($qrURL);
+if ($qrImage !== false) {
+    $qrBase64 = base64_encode($qrImage);
+    $qrSrc = "data:image/png;base64,{$qrBase64}";
+} else {
+    $qrSrc = null;
+}
+
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -35,11 +51,13 @@ function http_abort($code, $msg)
     exit;
 }
 
-function h($str) {
+function h($str)
+{
     return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-function data_br($dateStr) {
+function data_br($dateStr)
+{
     if (!$dateStr) return '';
     $ts = strtotime($dateStr);
     if ($ts === false) return '';
@@ -174,58 +192,71 @@ $papel       = !empty($dados['papel']) ? mb_strtoupper($dados['papel'], 'UTF-8')
 $nascBR      = data_br($dados['nascimento_colab'] ?? null);
 $dataHojeBR  = strftime('%d de %B de %Y');
 
+// Caminho do plano de fundo
+$bgPath = __DIR__ . '/backup/certificado.png';
+if (!file_exists($bgPath)) {
+    http_abort(500, "Imagem de fundo não encontrada: backup/certificado.png");
+}
+$bgBase64 = base64_encode(file_get_contents($bgPath));
+$bgMime = mime_content_type($bgPath);
+
 $css = <<<CSS
-    @page { margin: 30px; }
-    body { font-family: DejaVu Sans, Arial, Helvetica, sans-serif; color:#1b1f23; }
-    .wrap { width: 100%; padding: 24px 28px; box-sizing: border-box; }
-    .box {
-        border: 4px solid #20b2aa;
-        border-radius: 16px;
-        padding: 28px 32px;
-    }
-    .titulo {
-        text-align: center;
-        font-size: 28px;
-        margin: 0 0 6px 0;
-        letter-spacing: .4px;
-        color:#17928b;
-        font-weight: 700;
-    }
-    .sub { text-align: center; font-size: 14px; color:#6c757d; margin-bottom: 24px; }
-    .nome {
-        text-align: center;
-        font-size: 36px;
-        margin: 10px 0 4px 0;
-        font-weight: 800;
-    }
-    .linha { text-align: center; font-size: 16px; margin: 10px 0; }
-    .destaque { font-weight: 700; }
-    .rodape {
-        margin-top: 36px;
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        color:#6c757d;
-    }
-    .assinaturas {
-        margin-top: 46px;
-        display: flex;
-        justify-content: space-around;
-        text-align: center;
-        font-size: 12px;
-    }
-    .ass {
-        width: 40%;
-        border-top: 1px solid #aaa;
-        padding-top: 6px;
-    }
-    .branding {
-        position: absolute;
-        right: 28px;
-        top: 22px;
-        font-size: 11px;
-        color:#6c757d;
-    }
+    @page { margin: 0; }
+   body {
+    margin: 0;
+    padding: 0;
+    background-image: url('data:$bgMime;base64,$bgBase64');
+    background-size: cover;
+    background-position: center;
+    font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+    color:#000;
+}
+
+.wrap {
+    position: relative;
+    width: 105%;
+    height: 100%;
+    text-align: center;
+}
+
+/* Nome do participante */
+.projeto {
+    position: absolute;
+    top: 38%;        /* alinhado exatamente entre as linhas douradas */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+/* Texto de participação e detalhes */
+.detalhes {
+    position: absolute;
+    top: 56%;        /* linha dos detalhes sobre as faixas douradas inferiores */
+    left: 40%;
+    transform: translate(-40%, -50%);
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+/* Campo da assinatura e informações institucionais */
+.assinatura {
+    position: absolute;
+    bottom: 20%;     /* fica encaixado logo acima da linha da máscara direita */
+    left: 38%;
+    text-align: center;
+    font-size: 11.5px;
+    line-height: 1.1;
+}
+
+.qrcode {
+    position: absolute;
+    bottom: 20%;
+    right: 65%;
+    width: 120px;
+    height: 120px;
+}
 CSS;
 
 $html = <<<HTML
@@ -235,39 +266,32 @@ $html = <<<HTML
 <style>{$css}</style>
 <body>
 <div class="wrap">
-    <div class="branding">Emitido em {$dataHojeBR}</div>
-    <div class="box">
-        <h1 class="titulo">CERTIFICADO DE PARTICIPAÇÃO</h1>
-        <div class="sub">Formação/Projeto Cultural — {$anoProj}</div>
+    <div class="projeto">{$nomeProj}</div>
+    <div class="detalhes">
 
-        <p class="linha">Certificamos que</p>
-        <div class="nome">{$nomeColab}</div>
-        <p class="linha">nascido(a) em <span class="destaque">{$nascBR}</span>, participou do projeto</p>
-        <p class="linha"><span class="destaque">{$nomeProj}</span> <small>({$categoria})</small></p>
-HTML;
+A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</B> participou do Projeto <b>{$nomeProj}</b>, desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação nas ações de formação e difusão cultural promovidas pela associação.
+<br>Este certificado é concedido em reconhecimento à sua participação e colaboração nas atividades artísticas e educativas do referido projeto.
 
-if (!empty($papel)) {
-    $html .= "<p class=\"linha\">atuação/ função: <span class=\"destaque\">{$papel}</span></p>";
-}
 
-$html .= <<<HTML
-        <div class="assinaturas">
-            <div class="ass">
-                Associação Cultural Azerutan<br>
-                Presidência
-            </div>
-            <div class="ass">
-                Coordenação do Projeto<br>
-                {$nomeProj}
-            </div>
-        </div>
-
-        <div class="rodape">
-            <div>Associação Cultural Azerutan</div>
-            <div>CNPJ: 53.849.215/0001-48</div>
-            <div>Igarassu - PE</div>
-        </div>
     </div>
+    <div class="assinatura">
+<b>{$categoria} - {$papel} - {$anoProj}</b><br>
+
+        Emitido em {$dataHojeBR}<br>
+        Associação Cultural Azerutan<br>
+        CNPJ: 53.849.215/0001-48<br>
+        Igarassu - PE
+
+    </div>
+    
+    <?php if (!empty($qrSrc)): ?>
+    <img class="qrcode" src="<?= $qrSrc ?>" alt="QR Code de validação">
+    <small style="position:absolute; bottom:9%; right:7%; font-size:10px;">Escaneie o QR Code para abrir o certificado</small>
+<?php else: ?>
+    <small style="position:absolute; bottom:9%; right:7%; font-size:10px; color:red;">QR Code indisponível</small>
+<?php endif; ?>
+    <img class="qrcode" src="data:image/png;base64,{$qrBase64}" alt="QR Code de validação">
+    
 </div>
 </body>
 </html>
@@ -276,7 +300,7 @@ HTML;
 /* ---------- Renderiza PDF (paisagem) ---------- */
 
 $options = new Options();
-$options->set('isRemoteEnabled', true);   // se for usar imagens externas
+$options->set('isRemoteEnabled', true);
 $options->set('isHtml5ParserEnabled', true);
 
 $dompdf = new Dompdf($options);
@@ -289,6 +313,6 @@ $nomeArquivo = 'CERTIFICADO_' . preg_replace('/\s+/', '_', $nomeColab) . '.pdf';
 // Limpa qualquer buffer e envia o PDF inline
 while (ob_get_level()) ob_end_clean();
 header('Content-Type: application/pdf; charset=utf-8');
-header('Content-Disposition: inline; filename="'.$nomeArquivo.'"');
+header('Content-Disposition: inline; filename="' . $nomeArquivo . '"');
 echo $dompdf->output();
 exit;
