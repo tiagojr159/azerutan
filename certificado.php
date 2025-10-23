@@ -10,7 +10,6 @@ ob_start();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// REMOVIDO: ini_set('mbstring.internal_encoding', 'UTF-8');  // (deprecated em PHP 7+)
 setlocale(LC_ALL, 'pt_BR.utf-8', 'pt_BR', 'pt_BR.utf8', 'portuguese');
 date_default_timezone_set('America/Sao_Paulo');
 
@@ -20,22 +19,6 @@ require_once __DIR__ . '/config/crud.class.php';
 // Dompdf (ajuste o caminho do autoload conforme seu projeto)
 require_once __DIR__ . '/vendor/autoload.php';
 
-
-/* ---------- Gera QR Code em Base64 ---------- */
-/* ---------- Gera QR Code embutido ---------- */
-$linkCertificado = "http://azerutan.ki6.com.br/certificado.php?id_colaborador={$id_colaborador}&id_projeto={$id_projeto}";
-$qrURL = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=" . urlencode($linkCertificado) . "&choe=UTF-8";
-
-// Baixa a imagem do QR Code e converte para Base64
-$qrImage = @file_get_contents($qrURL);
-if ($qrImage !== false) {
-    $qrBase64 = base64_encode($qrImage);
-    $qrSrc = "data:image/png;base64,{$qrBase64}";
-} else {
-    $qrSrc = null;
-}
-
-
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -43,7 +26,6 @@ use Dompdf\Options;
 
 function http_abort($code, $msg)
 {
-    // Garante que nada ficou no buffer
     while (ob_get_level()) ob_end_clean();
     http_response_code($code);
     header('Content-Type: text/plain; charset=utf-8');
@@ -64,11 +46,58 @@ function data_br($dateStr)
     return date('d/m/Y', $ts);
 }
 
+/* ---------- Função para gerar QR Code com biblioteca PHP ---------- */
+function gerarQRCode($texto) {
+    try {
+        // Tenta usar a biblioteca Endroid QR Code (mais comum)
+        if (class_exists('\Endroid\QrCode\QrCode')) {
+            $qrCode = new \Endroid\QrCode\QrCode($texto);
+            $qrCode->setSize(250);
+            $qrCode->setMargin(10);
+            $writer = new \Endroid\QrCode\Writer\PngWriter();
+            $result = $writer->write($qrCode);
+            return 'data:image/png;base64,' . base64_encode($result->getString());
+        }
+        
+        // Fallback: tenta usar a API do Google Charts com contexto personalizado
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 5,
+                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'follow_location' => true
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false
+            ]
+        ]);
+        
+        $qrURL = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($texto);
+        $qrImage = @file_get_contents($qrURL, false, $context);
+        
+        if ($qrImage !== false && strlen($qrImage) > 100) {
+            return 'data:image/png;base64,' . base64_encode($qrImage);
+        }
+        
+        // Tenta API alternativa
+        $qrURL2 = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=" . urlencode($texto) . "&choe=UTF-8";
+        $qrImage2 = @file_get_contents($qrURL2, false, $context);
+        
+        if ($qrImage2 !== false && strlen($qrImage2) > 100) {
+            return 'data:image/png;base64,' . base64_encode($qrImage2);
+        }
+        
+        return null;
+    } catch (Exception $e) {
+        error_log("Erro ao gerar QR Code: " . $e->getMessage());
+        return null;
+    }
+}
+
 /* ============================================================
    BLOCO AJAX: validação de nascimento (JSON limpo)
    ============================================================ */
 if (isset($_GET['action']) && $_GET['action'] === 'confirmaNascimento') {
-    // Não permita nada no output antes do JSON
     while (ob_get_level()) ob_end_clean();
     header('Content-Type: application/json; charset=utf-8');
 
@@ -82,7 +111,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'confirmaNascimento') {
         $link = $con->connect();
 
         if ($link) {
-            // Confere se o colaborador pertence ao projeto E se a data bate
             $sql = "
                 SELECT 1
                 FROM colaborador c
@@ -109,7 +137,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'confirmaNascimento') {
     }
 
     echo json_encode($out, JSON_UNESCAPED_UNICODE);
-    exit; // IMPORTANTÍSSIMO: não renderiza o PDF nesse fluxo
+    exit;
 }
 
 /* ============================================================
@@ -119,7 +147,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'confirmaNascimento') {
 /* ---------- Entrada (GET) ---------- */
 $id_colaborador = filter_input(INPUT_GET, 'id_colaborador', FILTER_VALIDATE_INT);
 $id_projeto     = filter_input(INPUT_GET, 'id_projeto', FILTER_VALIDATE_INT);
-// nascimento é opcional no fluxo do PDF; se vier e não bater, bloqueia
 $nascimentoGET  = isset($_GET['nascimento']) ? trim($_GET['nascimento']) : null;
 
 if (!$id_colaborador || !$id_projeto) {
@@ -182,6 +209,10 @@ if ($nascimentoGET) {
     }
 }
 
+/* ---------- Gera QR Code (DEPOIS de pegar os IDs) ---------- */
+$linkCertificado = "http://azerutan.ki6.com.br/certificado.php?id_colaborador={$id_colaborador}&id_projeto={$id_projeto}";
+$qrSrc = gerarQRCode($linkCertificado);
+
 /* ---------- Monta HTML do certificado ---------- */
 
 $nomeColab   = mb_strtoupper($dados['nome_colab'] ?? '', 'UTF-8');
@@ -219,10 +250,9 @@ $css = <<<CSS
     text-align: center;
 }
 
-/* Nome do participante */
 .projeto {
     position: absolute;
-    top: 38%;        /* alinhado exatamente entre as linhas douradas */
+    top: 38%;
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 34px;
@@ -230,20 +260,18 @@ $css = <<<CSS
     letter-spacing: 1px;
 }
 
-/* Texto de participação e detalhes */
 .detalhes {
     position: absolute;
-    top: 56%;        /* linha dos detalhes sobre as faixas douradas inferiores */
+    top: 56%;
     left: 40%;
     transform: translate(-40%, -50%);
     font-size: 15px;
     line-height: 1.3;
 }
 
-/* Campo da assinatura e informações institucionais */
 .assinatura {
     position: absolute;
-    bottom: 20%;     /* fica encaixado logo acima da linha da máscara direita */
+    bottom: 20%;
     left: 38%;
     text-align: center;
     font-size: 11.5px;
@@ -252,46 +280,55 @@ $css = <<<CSS
 
 .qrcode {
     position: absolute;
-    bottom: 20%;
-    right: 65%;
-    width: 120px;
-    height: 120px;
+    bottom: 18%;
+    right: 63%;
+    width: 70px;
+    height: 70px;
+}
+
+.qrcode-legenda {
+    position: absolute;
+    bottom: 9%;
+    right: 7%;
+    font-size: 10px;
 }
 CSS;
+
+// Monta a seção do QR Code
+$qrcodeHtml = '';
+if (!empty($qrSrc)) {
+    $qrcodeHtml = '<img class="qrcode" src="' . $qrSrc . '" alt="QR Code de validação">';
+    $qrcodeLegenda = '<small class="qrcode-legenda">Escaneie o QR Code para validar</small>';
+} else {
+    // QR Code não disponível - deixa em branco ou mostra aviso discreto
+    $qrcodeLegenda = '';
+    // Log do erro para debug
+    error_log("QR Code não pôde ser gerado para certificado: colaborador={$id_colaborador}, projeto={$id_projeto}");
+}
 
 $html = <<<HTML
 <!DOCTYPE html>
 <html lang="pt-br">
+<head>
 <meta charset="utf-8">
 <style>{$css}</style>
+</head>
 <body>
 <div class="wrap">
     <div class="projeto">{$nomeProj}</div>
     <div class="detalhes">
-
-A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</B> participou do Projeto <b>{$nomeProj}</b>, desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação nas ações de formação e difusão cultural promovidas pela associação.
-<br>Este certificado é concedido em reconhecimento à sua participação e colaboração nas atividades artísticas e educativas do referido projeto.
-
-
+        A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</b> participou do Projeto <b>{$nomeProj}</b>, desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação nas ações de formação e difusão cultural promovidas pela associação.
+        <br>Este certificado é concedido em reconhecimento à sua participação e colaboração nas atividades artísticas e educativas do referido projeto.
     </div>
     <div class="assinatura">
-<b>{$categoria} - {$papel} - {$anoProj}</b><br>
-
+        <b>{$categoria} - {$papel} - {$anoProj}</b><br>
         Emitido em {$dataHojeBR}<br>
         Associação Cultural Azerutan<br>
         CNPJ: 53.849.215/0001-48<br>
         Igarassu - PE
-
     </div>
-    
-    <?php if (!empty($qrSrc)): ?>
-    <img class="qrcode" src="<?= $qrSrc ?>" alt="QR Code de validação">
-    <small style="position:absolute; bottom:9%; right:7%; font-size:10px;">Escaneie o QR Code para abrir o certificado</small>
-<?php else: ?>
-    <small style="position:absolute; bottom:9%; right:7%; font-size:10px; color:red;">QR Code indisponível</small>
-<?php endif; ?>
-    <img class="qrcode" src="data:image/png;base64,{$qrBase64}" alt="QR Code de validação">
-    
+    {$qrcodeHtml}
+    {$qrcodeLegenda}
 </div>
 </body>
 </html>
@@ -305,12 +342,11 @@ $options->set('isHtml5ParserEnabled', true);
 
 $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html, 'UTF-8');
-$dompdf->setPaper('A4', 'landscape');     // paisagem
+$dompdf->setPaper('A4', 'landscape');
 $dompdf->render();
 
 $nomeArquivo = 'CERTIFICADO_' . preg_replace('/\s+/', '_', $nomeColab) . '.pdf';
 
-// Limpa qualquer buffer e envia o PDF inline
 while (ob_get_level()) ob_end_clean();
 header('Content-Type: application/pdf; charset=utf-8');
 header('Content-Disposition: inline; filename="' . $nomeArquivo . '"');
