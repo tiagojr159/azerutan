@@ -221,7 +221,15 @@ $categoria   = $dados['categoria_proj'] ?? '';
 $anoProj     = $dados['ano_proj'] ?? date('Y');
 $papel       = !empty($dados['papel']) ? mb_strtoupper($dados['papel'], 'UTF-8') : '';
 $nascBR      = data_br($dados['nascimento_colab'] ?? null);
-$dataHojeBR  = strftime('%d de %B de %Y');
+// Corrige formatação de data no novo padrão PHP 8.2+
+$meses = [
+    'January' => 'janeiro', 'February' => 'fevereiro', 'March' => 'março',
+    'April' => 'abril', 'May' => 'maio', 'June' => 'junho',
+    'July' => 'julho', 'August' => 'agosto', 'September' => 'setembro',
+    'October' => 'outubro', 'November' => 'novembro', 'December' => 'dezembro'
+];
+$hoje = new DateTime();
+$dataHojeBR = $hoje->format('d') . ' de ' . $meses[$hoje->format('F')] . ' de ' . $hoje->format('Y');
 
 // Caminho do plano de fundo
 $bgPath = __DIR__ . '/backup/certificado.png';
