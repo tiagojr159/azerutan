@@ -221,15 +221,7 @@ $categoria   = $dados['categoria_proj'] ?? '';
 $anoProj     = $dados['ano_proj'] ?? date('Y');
 $papel       = !empty($dados['papel']) ? mb_strtoupper($dados['papel'], 'UTF-8') : '';
 $nascBR      = data_br($dados['nascimento_colab'] ?? null);
-// Corrige formatação de data no novo padrão PHP 8.2+
-$meses = [
-    'January' => 'janeiro', 'February' => 'fevereiro', 'March' => 'março',
-    'April' => 'abril', 'May' => 'maio', 'June' => 'junho',
-    'July' => 'julho', 'August' => 'agosto', 'September' => 'setembro',
-    'October' => 'outubro', 'November' => 'novembro', 'December' => 'dezembro'
-];
-$hoje = new DateTime();
-$dataHojeBR = $hoje->format('d') . ' de ' . $meses[$hoje->format('F')] . ' de ' . $hoje->format('Y');
+$dataHojeBR  = strftime('%d de %B de %Y');
 
 // Caminho do plano de fundo
 $bgPath = __DIR__ . '/backup/certificado.png';
@@ -240,79 +232,94 @@ $bgBase64 = base64_encode(file_get_contents($bgPath));
 $bgMime = mime_content_type($bgPath);
 
 $css = <<<CSS
-@page { margin: 0; size: A4 landscape; }
+@page { 
+    margin: 0; 
+    size: A4 landscape;
+}
 
-html, body {
+body {
     margin: 0;
     padding: 0;
-    width: 297mm;   /* A4 horizontal */
-    height: 210mm;
-    background-image: url('data:$bgMime;base64,$bgBase64');
-    background-size: cover;
-    background-position: center;
     font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
     color: #000;
+    width: 297mm;
+    height: 210mm;
+    position: relative;
+    overflow: hidden;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 297mm;
+    height: 210mm;
+    z-index: 1;
 }
 
 .wrap {
-    position: relative;
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 297mm;
+    height: 210mm;
+    z-index: 2;
 }
 
-/* Título ou nome do projeto */
 .projeto {
     position: absolute;
-    top: 37%;
+    top: 72mm;
     left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: 1px;
+    width: 200mm;
+    margin-left: -100mm;
     text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #000;
 }
 
-/* Texto central */
 .detalhes {
     position: absolute;
-    top: 54%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 15px;
-    line-height: 1.5;
-    width: 80%;
+    top: 85mm;
+    left: 58mm;
+    width: 180mm;
     text-align: justify;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #000;
 }
 
-/* Rodapé */
 .assinatura {
     position: absolute;
-    bottom: 12%;
+    bottom: 42mm;
     left: 50%;
-    transform: translateX(-50%);
+    width: 120mm;
+    margin-left: -60mm;
     text-align: center;
-    font-size: 12px;
-    line-height: 1.2;
+    font-size: 10px;
+    line-height: 1.3;
+    color: #000;
 }
 
-/* QR Code */
 .qrcode {
     position: absolute;
-    bottom: 12%;
-    right: 6%;
-    width: 90px;
-    height: 90px;
+    bottom:37mm;
+    right: 176mm;
+    width: 20mm;
+    height: 20mm;
 }
 
 .qrcode-legenda {
     position: absolute;
-    bottom: 6%;
-    right: 6%;
-    font-size: 10px;
+    bottom: 20mm;
+    right: 20mm;
+    width: 20mm;
     text-align: center;
+    font-size: 7px;
+    color: #000;
 }
 CSS;
-
 
 // Monta a seção do QR Code
 $qrcodeHtml = '';
@@ -334,18 +341,13 @@ $html = <<<HTML
 <style>{$css}</style>
 </head>
 <body>
+<img class="background" src="data:{$bgMime};base64,{$bgBase64}" alt="Fundo">
 <div class="wrap">
     <div class="projeto">{$nomeProj}</div>
-
     <div class="detalhes">
-        A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</b> participou do Projeto <b>{$nomeProj}</b>,
-        desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação
-        nas ações de formação e difusão cultural promovidas pela associação.
-        <br><br>
-        Este certificado é concedido em reconhecimento à sua participação e colaboração
-        nas atividades artísticas e educativas do referido projeto.
+        A Associação Cultural AZERUTAN declara, para os devidos fins, que <b>{$nomeColab}</b> participou do Projeto <b>{$nomeProj}</b>, desenvolvido por esta instituição, exercendo a função de <b>{$papel}</b>, contribuindo com empenho e dedicação nas ações de formação e difusão cultural promovidas pela associação.
+        <br><br>Este certificado é concedido em reconhecimento à sua participação e colaboração nas atividades artísticas e educativas do referido projeto.
     </div>
-
     <div class="assinatura">
         <b>{$categoria} - {$papel} - {$anoProj}</b><br>
         Emitido em {$dataHojeBR}<br>
@@ -353,14 +355,11 @@ $html = <<<HTML
         CNPJ: 53.849.215/0001-48<br>
         Igarassu - PE
     </div>
-
     {$qrcodeHtml}
-    {$qrcodeLegenda}
 </div>
 </body>
 </html>
 HTML;
-
 
 /* ---------- Renderiza PDF (paisagem) ---------- */
 
