@@ -1,16 +1,17 @@
 <?php
+//header.php
 require_once 'config/conexao.class.php';
 require_once 'config/crud.class.php';
 require_once 'config.php';
 
-$con  = new conexao();
-$conn = $con->connect();
+ $con  = new conexao();
+ $conn = $con->connect();
 if (!$conn) {
     die('Erro ao conectar ao banco de dados: ' . $con->getError());
 }
 
-$sql = "SELECT id, nome, categoria, link_img FROM projetos WHERE ativo = 1 ORDER BY anoprojeto DESC";
-$result = mysqli_query($conn, $sql);
+ $sql = "SELECT id, nome, categoria, link_img FROM projetos WHERE ativo = 1 ORDER BY anoprojeto DESC";
+ $result = mysqli_query($conn, $sql);
 if (!$result) {
     die("Erro na consulta: " . mysqli_error($conn));
 }
@@ -20,9 +21,7 @@ if (!$result) {
 
 <head>
     <meta charset="UTF-8" />
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Paixão de Cristo de Igarassu — Azerutan</title>
 
     <!-- Bootstrap -->
@@ -32,22 +31,33 @@ if (!$result) {
     <style>
         :root {
             --primary: #20b2aa;
-            /* lightseagreen */
             --primary-700: #17928b;
             --bg: #f4f7f8;
             --card: #ffffff;
             --text: #1b1f23;
             --muted: #6c757d;
             --ok: #32cd32;
-            /* limegreen */
+            --light-gray: #ECEFF1;
+            --forest-green: #2E7D32;
+            --white: #FFFFFF;
+            --light-green: #A5D6A7;
+            --blue: #1976D2;
+            --darker-blue: #1565C0;
+            --green: #4CAF50;
+            --darker-green: #43A047;
+            --red: #D32F2F;
+            --dark-gray: #333;
+            --grayish-blue: #B0BEC5;
+            --very-light-green: #E8F5E9;
+            --pale-green: #DCEDC8;
+            --almost-white-green: #F1F8E9;
+            --soft-green: #C8E6C9;
+            --medium-green: #81C784;
+            --bright-green: #66BB6A;
         }
 
-        html,
-        body {
-            height: 100%
-        }
-
-        body {
+        html, body {
+            height: 100%;
             background: var(--bg);
             color: var(--text);
             font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -58,9 +68,12 @@ if (!$result) {
             background: var(--primary);
         }
 
-        .navbar .nav-link,
-        .navbar-brand {
-            font-weight: 600
+        .navbar .nav-link, .navbar-brand {
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            color: var(--light-green) !important;
         }
 
         .hero {
@@ -73,11 +86,11 @@ if (!$result) {
 
         .hero h1 {
             font-weight: 700;
-            letter-spacing: .2px
+            letter-spacing: .2px;
         }
 
         .hero p {
-            opacity: .95
+            opacity: .95;
         }
 
         .section-title {
@@ -112,6 +125,16 @@ if (!$result) {
             border-color: var(--primary-700);
         }
 
+        .btn-success {
+            background: var(--green);
+            border-color: var(--green);
+        }
+
+        .btn-success:hover {
+            background: var(--darker-green);
+            border-color: var(--darker-green);
+        }
+
         .status-chip {
             font-size: clamp(.95rem, .9rem + .2vw, 1.15rem);
             color: #fff;
@@ -120,6 +143,16 @@ if (!$result) {
             padding: .25rem .6rem;
             font-weight: 700;
             white-space: nowrap;
+        }
+
+        .status-pendente {
+            color: var(--red);
+            font-weight: bold;
+        }
+
+        .status-ok {
+            color: var(--green);
+            font-weight: bold;
         }
 
         /* grade dos projetos (responsivo) */
@@ -155,90 +188,192 @@ if (!$result) {
 
         /* utilidades */
         .gap-12 {
-            gap: 12px
+            gap: 12px;
         }
 
         .mt-32 {
-            margin-top: 32px
+            margin-top: 32px;
         }
 
         /* ajustes mobile */
         @media (max-width: 575.98px) {
             .navbar-brand {
-                font-size: 1.05rem
+                font-size: 1.05rem;
             }
 
             .hero {
                 padding: 1.25rem;
-                margin-top: 4rem
+                margin-top: 4rem;
             }
 
             .card-az {
-                border-radius: .9rem
+                border-radius: .9rem;
             }
 
             .proj-icon {
                 width: 64px;
-                height: 64px
+                height: 64px;
+            }
+            
+            /* Transformar a tabela em lista em modo mobile */
+            .table-responsive {
+                border: none;
+                margin-bottom: 1rem;
+                overflow-x: visible;
+                width: 100%;
+            }
+            
+            .table {
+                font-size: 0.85rem;
+                width: 100%;
+                min-width: auto;
+                border: none;
+            }
+            
+            .table thead {
+                display: none;
+            }
+            
+            .table, .table tbody, .table tr, .table td {
+                display: block;
+                width: 100%;
+            }
+            
+            .table tr {
+                margin-bottom: 1rem;
+                border: 1px solid #e8ecee;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                background: #fff;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            
+            .table td {
+                text-align: center !important;
+                padding: 0.5rem 0;
+                border: none;
+                position: relative;
+                padding-left: 40%;
+                min-height: 40px;
+            }
+            
+            .table td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 35%;
+                padding-right: 10px;
+                font-weight: bold;
+                color: var(--muted);
+                text-align: left;
+                font-size: 0.8rem;
+            }
+            
+            /* Ajustes para a foto */
+            .table td:first-child {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 0.5rem;
+                min-height: 80px;
+                margin-bottom: 0.5rem;
+                background: var(--bg);
+                border-radius: 0.5rem;
+            }
+            
+            .table td:first-child:before {
+                display: none;
+            }
+            
+            .table td:first-child img {
+                max-width: 80px;
+                max-height: 80px;
+                border-radius: 0.5rem;
+                object-fit: cover;
+            }
+            
+            /* Ajustes para a coluna de ações */
+            .table td:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                padding-top: 0.75rem;
+                border-top: 1px dashed #e8ecee;
+                margin-top: 0.5rem;
+                justify-content: center;
+            }
+            
+            .table td:last-child:before {
+                display: none;
+            }
+            
+            /* Garantir que os botões de ação sejam visíveis */
+            .btn-info {
+                display: inline-block !important;
+                color: #fff !important;
+                background-color: #17a2b8 !important;
+                border-color: #17a2b8 !important;
+                padding: 0.25rem 0.5rem !important;
+                font-size: 0.75rem !important;
+                line-height: 1.2 !important;
+                border-radius: 0.2rem !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: static !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                clip: auto !important;
+                clip-path: none !important;
+            }
+            
+            .btn-info:hover {
+                color: #fff !important;
+                background-color: #138496 !important;
+                border-color: #117a8b !important;
+            }
+            
+            /* Forçar exibição do botão de certificado */
+            .btn-certificado {
+                display: inline-block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 9999 !important;
+            }
+            
+            /* Ajustes para dropdown do menu */
+            .navbar-nav .dropdown-menu {
+                position: static;
+                float: none;
+                background-color: transparent;
+                border: 0;
+                box-shadow: none;
+            }
+            
+            .navbar-nav .dropdown-item {
+                color: rgba(255,255,255,.8);
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-nav .dropdown-item:hover, 
+            .navbar-nav .dropdown-item:focus {
+                color: #fff;
+                background-color: rgba(255,255,255,.1);
             }
         }
 
-        :root {
-            --light-gray: #ECEFF1;
-            --forest-green: #2E7D32;
-            --white: #FFFFFF;
-            --light-green: #A5D6A7;
-            --blue: #1976D2;
-            --darker-blue: #1565C0;
-            --green: #4CAF50;
-            --darker-green: #43A047;
-            --red: #D32F2F;
-            --dark-gray: #333;
-            --grayish-blue: #B0BEC5;
-            --very-light-green: #E8F5E9;
-            --pale-green: #DCEDC8;
-            --almost-white-green: #F1F8E9;
-            --soft-green: #C8E6C9;
-            --medium-green: #81C784;
-            --bright-green: #66BB6A;
-        }
-
-
-
-
-        .nav-link:hover {
-            color: var(--light-green) !important;
-        }
-
-        .btn-primary {
-            background-color: var(--blue);
-            border-color: var(--blue);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--darker-blue);
-            border-color: var(--darker-blue);
-        }
-
-        .btn-success {
-            background-color: var(--green);
-            border-color: var(--green);
-        }
-
-        .btn-success:hover {
-            background-color: var(--darker-green);
-            border-color: var(--darker-green);
-        }
-
-
-        .status-pendente {
-            color: var(--red);
-            font-weight: bold;
-        }
-
-        .status-ok {
-            color: var(--green);
-            font-weight: bold;
+        /* Estilos para desktop (alinhado à esquerda) */
+        @media (min-width: 576px) {
+            .table td:not(:first-child):not(:last-child) {
+                text-align: left !important;
+            }
+            
+            .table td:last-child {
+                text-align: center !important;
+            }
         }
 
         .form-group {
@@ -308,7 +443,7 @@ if (!$result) {
                 grid-template-columns: 1fr;
             }
 
-            .btn {
+            .btn:not(.table .btn) {
                 width: 100%;
             }
         }
@@ -335,7 +470,9 @@ if (!$result) {
                         <a class="nav-link" href="institucional.php">Institucional</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link" href="index.php">Secretaria</a>
+                        <a class="nav-link dropdown-toggle" href="#" id="drop01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Secretaria
+                        </a>
                         <div class="dropdown-menu" aria-labelledby="drop01">
                             <a class="dropdown-item" href="form_colaborador.php?novo=1">Nova Matrícula</a>
                             <a class="dropdown-item" href="inscricao_renovar.php">Renovar Matrícula</a>
