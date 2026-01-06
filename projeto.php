@@ -70,6 +70,8 @@ require_once 'header.php';
         die("Projeto não encontrado.");
     }
 
+    $INSCRICOES_ABERTAS = !empty($projeto['inscricoes_abertas']) ? (int)$projeto['inscricoes_abertas'] : 0;
+
     // ===========================
     // [AJUSTE MÍNIMO] SINALIZADORES
     // ===========================
@@ -99,11 +101,22 @@ require_once 'header.php';
             <p><strong>Vagas:</strong> <?= htmlspecialchars($projeto['vagas']); ?></p>
 
             <div class="text-center mt-4">
-                <!-- (AJUSTE) Abre modal, mantendo href como fallback -->
-                <a href="inscricao.php?projeto=<?= urlencode($projeto['id']); ?>" id="btnFazerInscricao" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modalInscricao">
-                    Fazer inscrição
-                </a>
+                <?php if ($INSCRICOES_ABERTAS == 1): ?>
+                    <!-- Inscrições abertas: mostra o botão -->
+                    <a href="inscricao.php?projeto=<?= urlencode($projeto['id']); ?>"
+                        id="btnFazerInscricao"
+                        class="btn btn-primary btn-lg"
+                        data-toggle="modal" data-target="#modalInscricao">
+                        Fazer inscrição
+                    </a>
+                <?php else: ?>
+                    <!-- Inscrições fechadas: mostra somente o texto -->
+                    <span class="btn btn-secondary btn-lg disabled" aria-disabled="true">
+                        Inscrições encerradas
+                    </span>
+                <?php endif; ?>
             </div>
+
 
 
         </div>
