@@ -10,7 +10,7 @@ if (!$conn) {
     die('Erro ao conectar ao banco de dados: ' . $con->getError());
 }
 
- $sql = "SELECT id, nome, categoria, link_img FROM projetos WHERE ativo = 1 ORDER BY anoprojeto DESC";
+ $sql = "SELECT * FROM projetos WHERE ativo = 1 ORDER BY anoprojeto DESC";
  $result = mysqli_query($conn, $sql);
 if (!$result) {
     die("Erro na consulta: " . mysqli_error($conn));
@@ -168,11 +168,11 @@ if (!$result) {
         }
 
         .proj-icon {
-            width: 172px;
-            height: 72px;
+            width: 180px;
+            height: 160px;
             object-fit: contain;
-            margin-bottom: .5rem;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .12));
+           /* margin-bottom: .5rem; */
+           /* filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .12));    */
         }
 
         .proj-name {
