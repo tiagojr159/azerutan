@@ -339,20 +339,31 @@ require_once 'header.php';
                 $nivelUsuario = !empty($_SESSION['nivel']) ? $_SESSION['nivel'] : 0;
 
                 // Consulta principal de colaboradores
-                $sql = "SELECT c.*, a.*, a.cache as cacheano, 
-            (select count(*) from pend_cad where id_colaborador = c.id and pendencia = 1) as pendencia 
-            FROM colaborador c, ano_projeto a 
-            WHERE c.id = a.id_colaborador 
-            AND a.id_projeto = '$id_projeto'";
+                $sql = "SELECT 
+            c.*, 
+            a.*, 
+            a.cache AS cacheano,
+            (SELECT COUNT(*) 
+               FROM pend_cad pc 
+              WHERE pc.id_colaborador = c.id 
+                AND pc.pendencia = 1
+            ) AS pendencia
+        FROM colaborador c
+        JOIN ano_projeto a ON c.id = a.id_colaborador
+        WHERE a.id_projeto = '$id_projeto'";
+
                 if ($situacao == 'PENDENTE') {
-                    $sql .= " AND (a.situacao IN ('PENDENTE') or a.situacao IN ('SIM') && papel1 is null)";
+                    $sql .= " AND (a.situacao = 'PENDENTE' OR (a.situacao = 'SIM' AND a.papel1 IS NULL))";
                 } else {
-                    $sql .= "  AND a.situacao IN ('$situacao') ";
+                    $sql .= " AND a.situacao = '$situacao' ";
                 }
+
                 if ($tipo_papel != '') {
-                    $sql .= " AND (papel1 LIKE '$tipo_papel%' OR papel2 LIKE '$tipo_papel%' OR papel3 LIKE '$tipo_papel%')";
+                    $sql .= " AND (a.papel1 LIKE '$tipo_papel%' OR a.papel2 LIKE '$tipo_papel%' OR a.papel3 LIKE '$tipo_papel%')";
                 }
-                $sql .= " GROUP BY id ORDER BY nome ASC LIMIT 1000";
+
+                $sql .= " ORDER BY c.nome ASC LIMIT 1000";
+
                 $consulta = mysqli_query($con->connect(), $sql);
 
                 // Total de dias com chamadas no ano
@@ -420,21 +431,32 @@ require_once 'header.php';
                 $retorno .= "<thead><tr><th>Foto</th><th>Nome</th><th>Status</th><th>Ações</th></tr></thead><tbody>";
                 $quant = 0;
                 $nivelUsuario = !empty($_SESSION['nivel']) ? $_SESSION['nivel'] : 0;
-                $sql = "SELECT c.*, a.*, a.cache as cacheano, 
-            (select count(*) from pend_cad where id_colaborador = c.id and pendencia = 1) as pendencia 
-            FROM colaborador c, ano_projeto a 
-            WHERE c.id = a.id_colaborador 
-            AND a.id_projeto = '$id_projeto'";
+                $sql = "SELECT 
+            c.*, 
+            a.*, 
+            a.cache AS cacheano,
+            (SELECT COUNT(*) 
+               FROM pend_cad pc 
+              WHERE pc.id_colaborador = c.id 
+                AND pc.pendencia = 1
+            ) AS pendencia
+        FROM colaborador c
+        JOIN ano_projeto a ON c.id = a.id_colaborador
+        WHERE a.id_projeto = '$id_projeto'";
+
                 if ($situacao == 'PENDENTE') {
-                    $sql .= " AND (a.situacao IN ('PENDENTE') or a.situacao IN ('SIM') && papel1 is null)";
+                    // mantém sua regra: pendente OU (sim E papel1 null)
+                    $sql .= " AND (a.situacao = 'PENDENTE' OR (a.situacao = 'SIM' AND a.papel1 IS NULL))";
                 } else {
-                    $sql .= "  AND a.situacao IN ('$situacao') ";
+                    $sql .= " AND a.situacao = '$situacao' ";
                 }
 
                 if ($tipo_papel != '') {
-                    $sql .= " AND (papel1 LIKE '$tipo_papel%' OR papel2 LIKE '$tipo_papel%' OR papel3 LIKE '$tipo_papel%')";
+                    $sql .= " AND (a.papel1 LIKE '$tipo_papel%' OR a.papel2 LIKE '$tipo_papel%' OR a.papel3 LIKE '$tipo_papel%')";
                 }
-                $sql .= " GROUP BY id ORDER BY nome ASC LIMIT 1000";
+
+                $sql .= " ORDER BY c.nome ASC LIMIT 1000";
+
                 $consulta = mysqli_query($con->connect(), $sql);
                 $qtde = mysqli_num_rows($consulta); // conta linhas retornadas por esse SELECT
                 if ($qtde > 0) {
@@ -471,8 +493,7 @@ require_once 'header.php';
                     }
                     $retorno .= "<a href='form_foto_documentacao.php?id=" . $campo['id'] . "' class='btn btn-primary btn-sm me-1'>Atualizar</a>";
 
-
-                    if ($EXIBIR_CERTIFICADO == 1) {
+                    if ($EXIBIR_CERTIFICADO == 1 && $situacao != 'PENDENTE') {
                         $retorno .= "<button type='button' class='btn btn-info btn-sm btn-certificado'
   data-idcol='" . $campo['id'] . "'
   data-idproj='" . (int)$id_projeto . "'
