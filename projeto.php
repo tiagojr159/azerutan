@@ -1,4 +1,5 @@
 <?php
+//projeto.php
 require_once 'config/conexao.class.php';
 require_once 'config/crud.class.php';
 require_once 'config.php';
@@ -9,6 +10,10 @@ if (!$conn) {
     die('Erro ao conectar ao banco de dados: ' . $con->getError());
 }
 $id_projeto = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+if ($id_projeto == 0) {
+    header('Location: index.php');
+    exit;
+}
 $sql = "SELECT id, nome, categoria FROM projetos WHERE ativo = 1 ORDER BY nome";
 $result = mysqli_query($conn, $sql);
 if (!$result) {
@@ -100,14 +105,62 @@ require_once 'header.php';
             <p><strong>Descrição:</strong> <?= nl2br(htmlspecialchars($projeto['descricao'])); ?></p>
             <p><strong>Vagas:</strong> <?= htmlspecialchars($projeto['vagas']); ?></p>
 
+            <?php
+            // ====== EDITAIS (PDF) ======
+            $editais = [];
+
+            // 1) tenta buscar na tabela editais (novo)
+            if ($st = mysqli_prepare($conn, "SELECT id, nome_arquivo, caminho_arquivo FROM editais WHERE projeto_id=? ORDER BY criado_em DESC, id DESC")) {
+                mysqli_stmt_bind_param($st, 'i', $projeto['id']);
+                mysqli_stmt_execute($st);
+                $rs = mysqli_stmt_get_result($st);
+                while ($r = mysqli_fetch_assoc($rs)) {
+                    $editais[] = [
+                        'nome' => $r['nome_arquivo'] ?: ('Edital #' . $r['id']),
+                        'url'  => $r['caminho_arquivo']
+                    ];
+                }
+                mysqli_stmt_close($st);
+            }
+
+            // 2) fallback: se não achou nada na tabela e existir link_pdf antigo
+            if (count($editais) === 0 && !empty($projeto['link_pdf'])) {
+                $editais[] = [
+                    'nome' => 'Edital (PDF)',
+                    'url'  => $projeto['link_pdf']
+                ];
+            }
+
+            // 3) renderiza somente se tiver algum edital
+            if (count($editais) > 0): ?>
+                <p><strong>Edital:</strong>
+                    <?php foreach ($editais as $i => $e):
+                      $url_pdf = preg_replace('#upload_pic/#', '', $e['url'], 1);
+                          $link = $link_imagem_projeto.$url_pdf; 
+                        ?>
+                        <?php if ($i > 0) echo ' | '; ?>
+                        <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
+                            <?= htmlspecialchars($e['nome'], ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                    <?php endforeach; ?>
+                </p>
+            <?php endif; ?>
+
             <div class="text-center mt-4">
                 <?php if ($INSCRICOES_ABERTAS == 1): ?>
-                    <!-- Inscrições abertas: mostra o botão -->
+                    <h3 style="color: green;">INSCRIÇÕES ABERTAS</h3>
+                    <br><br>
                     <a href="inscricao.php?projeto=<?= urlencode($projeto['id']); ?>"
                         id="btnFazerInscricao"
-                        class="btn btn-primary btn-lg"
+                        class="btn btn-success btn-lg"
                         data-toggle="modal" data-target="#modalInscricao">
                         Fazer inscrição
+                    </a>
+                    <a href="inscricao.php?projeto=<?= urlencode($projeto['id']); ?>"
+                        id="btn-nova-inscricao"
+                        class="btn btn-primary btn-lg"
+                        data-toggle="modal" data-target="#modalInscricao">
+                        Novo Cadastro
                     </a>
                 <?php else: ?>
                     <!-- Inscrições fechadas: mostra somente o texto -->
@@ -115,14 +168,6 @@ require_once 'header.php';
                         Inscrições encerradas
                     </span>
                 <?php endif; ?>
-            </div>
-
-
-
-        </div>
-    </div>
-
-
 
 
 
@@ -155,54 +200,44 @@ require_once 'header.php';
     <!-- (NOVO) Modal INSCRIÇÃO/RENOVAÇÃO – autocomplete + data de nascimento -->
     <div class="modal fade" id="modalInscricao" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" role="document">
-            <form id="form-renovacao" class="modal-content" method="get" action="cer.php">
+            <div class="modal-content">
+
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalInscricaoLabel">Fazer matrícula nesse projeto</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- hidden do projeto (AJAX usa isso) -->
+                    <input type="hidden" id="id_projeto_modal" value="<?= (int)$projeto['id']; ?>">
+                    <!-- hidden do colaborador vindo do autocomplete -->
+                    <input type="hidden" id="id_colaborador" value="">
+
+                    <div class="mb-3">
+                        <label for="autocomplete-ajax-bairro" class="form-label">Nome</label>
+                        <input type="text" id="autocomplete-ajax-bairro" class="form-control"
+                            placeholder="Digite seu nome" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="data_nascimento" class="form-label">Data de Nascimento</label>
+                        <input type="date" id="data_nascimento" class="form-control">
+                    </div>
 
                 </div>
-                <div class="modal-body">
-                    <!-- mesmo fluxo da tela Renovar Inscrição -->
-                    <input type="hidden" name="action" value="valida_renovacao">
-                    <input type="hidden" name="projeto" value="<?= (int)$projeto['id']; ?>">
-                    <input type="hidden" id="id_colaborador" name="id_colaborador">
 
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" id="btn-renovar" class="btn btn-primary">
+                        Fazer Inscrição
+                    </button>
+                </div>
 
-
-                    <div class="modal-footer d-flex justify-content-between flex-wrap">
-
-                        <form action="crud_consulta.php" method="get" name="dados" id="form-inscricao" class="mt-4">
-                            <input type="hidden" name="action" value="valida_renovacao">
-                            <input type="hidden" name="id_colaborador" id="id_colaborador">
-
-                            <div class="">
-                                <label for="nome">Nome:</label>
-                                <input type="text" name="nome" id="autocomplete-ajax-bairro" class="form-control"
-                                    placeholder="Digite seu nome" style="text-transform: uppercase;">
-                            </div>
-
-                            <div class="">
-                                <label for="data_nascimento">Data de Nascimento:</label>
-                                <input type="date" name="data_nascimento" id="data_nascimento" class="form-control">
-                            </div>
-
-                        </form>
-                    </div>
-
-
-
-
-
-                    <div class="modal-footer d-flex justify-content-between flex-wrap">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
-                        <div class="ml-auto">
-                            <button type="button" id="btn-nova-inscricao" class="btn btn-success d-none">Nova Inscrição</button>
-                            <button type="submit" id="btn-renovar" class="btn btn-primary">Renovar Inscrição</button>
-                        </div>
-                    </div>
-            </form>
+            </div>
         </div>
     </div>
+
 
 
 
@@ -305,7 +340,8 @@ require_once 'header.php';
                     if (!empty($_GET['action']) && $_GET['action'] == 'modular') {
                         echo "<a href='projeto.php?action=lista&id=" . $id . "' class='btn btn-primary mb-3'>Exibir Lista</a>";
                         echo listaColaboradores($id_projeto, 'Direção', 'Dir', '#A5D6A7', '#E8F5E9', 'SIM');
-                        echo listaColaboradores($id_projeto, 'Direção Secundária', 'Assist', '#4CAF50', '#DCEDC8', 'SIM');
+                        echo listaColaboradores($id_projeto, 'Direção Secundária', 'Direção Secundária', '#4CAF50', '#DCEDC8', 'SIM');
+                        echo listaColaboradores($id_projeto, 'Assistente de Direção', 'Assist', '#4CAF50', '#DCEDC8', 'SIM');
                         echo listaColaboradores($id_projeto, 'Produção', 'Prod', '#81C784', '#F1F8E9', 'SIM');
                         echo listaColaboradores($id_projeto, 'Elenco', 'Elen', '#66BB6A', '#C8E6C9', 'SIM');
                         echo listaColaboradores($id_projeto, 'Bailarino(a)s', 'Bailarino1', '#A5D6A7', '#E8F5E9', 'SIM');
@@ -313,21 +349,24 @@ require_once 'header.php';
                         echo listaColaboradores($id_projeto, 'Músico(a)s', 'Músico', '#81C784', '#F1F8E9', 'SIM');
                         echo listaColaboradores($id_projeto, 'Secundário', 'Secun', '#4CAF50', '#C8E6C9', 'SIM');
                         echo listaColaboradores($id_projeto, 'Figurantes', 'Fig', '#66BB6A', '#E8F5E9', 'SIM');
-                        echo listaColaboradores($id_projeto, 'Selecionado', 'Fig', '#7ee683ff', '#E8F5E9', 'SIM');
-                        echo listaColaboradores($id_projeto, 'Professor', 'Professor', '#6f8170ff', '#E8F5E9', 'SIM');
+                        echo listaColaboradores($id_projeto, 'Selecionado', 'Selecionad', '#7ee683ff', '#E8F5E9', 'SIM');
+                        echo listaColaboradores($id_projeto, 'Aluno', 'Alun', '#7ee683ff', '#E8F5E9', 'SIM');
+                        echo listaColaboradores($id_projeto, 'Professor', 'Professo', '#6f8170ff', '#E8F5E9', 'SIM');
                         echo listaColaboradores($id_projeto, 'Pendente de Autorização', '', '#B0BEC5', '#ECEFF1', 'PENDENTE');
                     } else {
                         echo "<a href='projeto.php?action=modular&id=" . $id . "' class='btn btn-primary mb-3'>Exibir Lista</a>";
                         echo listaDivFuncao($id_projeto, 'Direção', 'Dir', '#A5D6A7', '#E8F5E9', 'SIM');
-                        echo listaDivFuncao($id_projeto, 'Direção Secundária', 'Assist', '#4CAF50', '#DCEDC8', 'SIM');
+                        echo listaDivFuncao($id_projeto, 'Direção Secundária', 'Direção Secundária', '#4CAF50', '#DCEDC8', 'SIM');
+                        echo listaDivFuncao($id_projeto, 'Assistente de Direção', 'Assist', '#90cd71ff', '#DCEDC8', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Produção', 'Prod', '#81C784', '#F1F8E9', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Elenco', 'Elen', '#66BB6A', '#C8E6C9', 'SIM');
-                        echo listaDivFuncao($id_projeto, 'Bailarino(a)s', 'Bailarino1', '#A5D6A7', '#E8F5E9', 'SIM');
+                        echo listaDivFuncao($id_projeto, 'Bailarino(a)s', 'Bailarino1', '#A5D6A7', '#5ec066ff', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Bailarino(a)s - Crianças', 'Bailarino2', '#A5D6A7', '#DCEDC8', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Músico(a)s', 'Músico', '#81C784', '#F1F8E9', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Secundário', 'Secun', '#4CAF50', '#C8E6C9', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Figurantes', 'Fig', '#66BB6A', '#E8F5E9', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Selecionado', 'Selecionado', '#7ee683ff', '#E8F5E9', 'SIM');
+                        echo listaDivFuncao($id_projeto, 'Aluno', 'Alun', '#7ee683ff', '#E8F5E9', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Professor', 'Professor', '#6f8170ff', '#E8F5E9', 'SIM');
                         echo listaDivFuncao($id_projeto, 'Pendente de Autorização', '', '#B0BEC5', '#ECEFF1', 'PENDENTE');
                     }
@@ -597,8 +636,8 @@ require_once 'header.php';
                         const dt = $('#data_nascimento').val().trim();
                         if (!idCol) {
                             e.preventDefault();
-                            alert('Selecione seu nome na lista ou crie uma cadastro novo');
-                            $('#autocomplete-nome').focus();
+                            alert('Selecione seu nome na lista (autocomplete) ou faça uma nova inscrição.');
+                            $('#autocomplete-ajax-bairro').focus();
                         }
                         if (!dt) {
                             e.preventDefault();
@@ -679,36 +718,8 @@ require_once 'header.php';
                     });
 
                     // ====== Validação simples (mesma lógica que você usa) ======
-                    function validarCampos() {
-                        var nome = $('#autocomplete-ajax-bairro').val().trim();
-                        var nasc = $('#data_nascimento').val().trim();
-                        var idCol = $('#id_colaborador').val().trim();
-                        var ok = true;
 
-                        if (!nome) {
-                            alert('Por favor, informe o Nome.');
-                            $('#autocomplete-ajax-bairro').addClass('border-danger').focus();
-                            ok = false;
-                        } else {
-                            $('#autocomplete-ajax-bairro').removeClass('border-danger');
-                        }
 
-                        if (!nasc) {
-                            alert('Por favor, informe a Data de Nascimento.');
-                            $('#data_nascimento').addClass('border-danger').focus();
-                            ok = false;
-                        } else {
-                            $('#data_nascimento').removeClass('border-danger');
-                        }
-
-                        if (!idCol) {
-
-                            alert('Selecione seu nome na lista (autocomplete) para renovar a matrícula, caso contrario, crie um cadastro novo.');
-                            ok = false;
-                        }
-
-                        return ok;
-                    }
 
                     // ====== Função AJAX da renovação ======
                     function enviarRenovacaoAJAX() {
@@ -751,21 +762,138 @@ require_once 'header.php';
                             });
                     }
 
-                    $('#form-inscricao').on('submit', function(e) {
-                        e.preventDefault(); // evita navegação
-                        if (!validarCampos()) return;
-                        enviarRenovacaoAJAX();
+
+                })();
+
+
+
+                function setupModalRenovacao() {
+
+                    // 1) Abrir modal pelos botões
+                    $(document).on('click', '#btnFazerInscricao, #btnFazerInscricao2', function(e) {
+                        e.preventDefault();
+                        const modalEl = document.getElementById('modalInscricao');
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modal.show();
                     });
 
-                    $('#btn-renovar').on('click', function(e) {
-                        if (this.type === 'button') {
-                            e.preventDefault();
-                            if (!validarCampos()) return;
-                            enviarRenovacaoAJAX();
+                    // 2) Autocomplete (somente 1 vez)
+                    $('#autocomplete-ajax-bairro').autocomplete({
+                        serviceUrl: 'crud_consulta.php?action=consultaNome',
+                        dataType: 'json',
+                        minChars: 2,
+                        deferRequestBy: 200,
+                        onSelect: function(sug) {
+                            $('#id_colaborador').val(sug.data);
+                            $('#autocomplete-ajax-bairro').removeClass('border-danger');
                         }
                     });
 
-                })();
+                    // 3) Se o usuário digitar e mudar o nome depois, zera o ID (evita renovar com ID errado)
+                    $(document).on('input', '#autocomplete-ajax-bairro', function() {
+                        $('#id_colaborador').val('');
+                    });
+
+                    // 4) Novo Cadastro
+                    $(document).on('click', '#btn-nova-inscricao', function() {
+                        const idProjeto = ($('#id_projeto_modal').val() || '').trim();
+                        window.location.href = 'inscricao.php?novo=1&id_projeto=' + encodeURIComponent(idProjeto);
+                    });
+
+                    // 5) Validação
+                    function validar() {
+                        const nome = ($('#autocomplete-ajax-bairro').val() || '').trim();
+                        const nasc = ($('#data_nascimento').val() || '').trim();
+                        const idCol = ($('#id_colaborador').val() || '').trim();
+                        const idProj = ($('#id_projeto_modal').val() || '').trim();
+
+                        if (!idProj) {
+                            alert('Projeto inválido.');
+                            return false;
+                        }
+
+                        if (!nome) {
+                            alert('Informe o Nome.');
+                            $('#autocomplete-ajax-bairro').addClass('border-danger').focus();
+                            return false;
+                        } else {
+                            $('#autocomplete-ajax-bairro').removeClass('border-danger');
+                        }
+
+                        if (!nasc) {
+                            alert('Informe a Data de Nascimento.');
+                            $('#data_nascimento').addClass('border-danger').focus();
+                            return false;
+                        } else {
+                            $('#data_nascimento').removeClass('border-danger');
+                        }
+
+                        // precisa do ID do autocomplete
+                        if (!idCol) {
+                            alert('Selecione seu nome na lista (autocomplete). Se não aparecer, faça um novo cadastro.');
+                            return false;
+                        }
+
+                        return true;
+                    }
+
+                    // 6) Renovar (AJAX)
+                    $(document).on('click', '#btn-renovar', function(e) {
+                        e.preventDefault();
+                        if (!validar()) return;
+
+                        const $btn = $('#btn-renovar');
+                        $btn.prop('disabled', true).text('Validando...');
+
+                        $.ajax({
+                                url: 'crud_consulta.php',
+                                method: 'GET',
+                                dataType: 'json',
+                                data: {
+                                    action: 'valida_renovacao',
+                                    ajax: 1,
+                                    projeto: $('#id_projeto_modal').val(),
+                                    id_colaborador: $('#id_colaborador').val(),
+                                    data_nascimento: $('#data_nascimento').val(),
+                                    nome: $('#autocomplete-ajax-bairro').val()
+                                },
+                                timeout: 15000
+                            })
+                            .done(function(resp) {
+                                if (resp && resp.ok) {
+                                    if (resp.redirect) {
+                                        window.location.href = resp.redirect;
+                                    } else {
+                                        alert(resp.msg || 'Renovação OK.');
+                                        location.reload();
+                                    }
+                                } else {
+                                    alert((resp && resp.msg) ? resp.msg : 'Não foi possível validar.');
+                                    if (resp && resp.redirect) window.location.href = resp.redirect;
+                                }
+                            })
+                            .fail(function(xhr) {
+                                alert('Falha na comunicação. Tente novamente.');
+                                console.log(xhr.responseText);
+                            })
+                            .always(function() {
+                                $btn.prop('disabled', false).text('Renovar Inscrição');
+                            });
+                    });
+
+                    // 7) ENTER na data também renova
+                    $(document).on('keydown', '#data_nascimento', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            $('#btn-renovar').click();
+                        }
+                    });
+                }
+
+                // chama 1 vez
+                $(function() {
+                    setupModalRenovacao();
+                });
             </script>
 
             <script>
@@ -816,18 +944,7 @@ require_once 'header.php';
                 });
             </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
+            
             <!-- Realização -->
             <div class="container mt-32">
                 <div class="card-az">

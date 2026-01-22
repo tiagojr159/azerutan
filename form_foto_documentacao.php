@@ -1,10 +1,11 @@
 <?php
+//form_foto_documentacao.php
 /*
- *   Ofereço a Deus todos esses código que escrevi como fruto do 
- * meu trabalho e por intercessão de São Isodoro de Servilha e 
- * São Jose Maria Escrivá esses sistema nunca seja usado para o mau 
- * ou desagrado do nosso senhor Jesus Cristo. Amém.  
- * 
+ *   Ofereço a Deus todos esses código que escrevi como fruto do
+ * meu trabalho e por intercessão de São Isodoro de Servilha e
+ * São Jose Maria Escrivá esses sistema nunca seja usado para o mau
+ * ou desagrado do nosso senhor Jesus Cristo. Amém.
+ *
  * Tiago Junior - 31/08/2014
  * form_foto_documentacao.php
  */
@@ -16,55 +17,152 @@ require_once 'config.php';
 
 date_default_timezone_set('America/Sao_Paulo');
 error_reporting(0);
+
 $con = new conexao();
 $con->connect();
-@$id_colaborador = $_GET['id'];
-@$id_projeto = $_GET['id_projeto'];
 
-if (isset($_POST['acao']) && $_POST['acao'] == "seExiste") {
-    if (!file_exists($_POST['link'])) {
-        echo "nok";
-    } else {
-        echo "ok";
+/**
+ * [AJUSTE PEQUENO] normaliza ids (sem mudar regra de negócio)
+ */
+$id_colaborador = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$id_projeto     = isset($_GET['id_projeto']) ? (int)$_GET['id_projeto'] : 0;
+
+/**
+ * ==========================================================
+ *  [REFATORAÇÃO SOMENTE UPLOAD + CHECAGEM DE EXISTÊNCIA]
+ *  - mantém as regras e retornos (echo do link)
+ *  - melhora validação, nomes e checagem para URL/arquivo local
+ * ==========================================================
+ */
+if (isset($_POST['acao']) && $_POST['acao'] === "seExiste") {
+
+    // pode vir URL (link_imagem_projeto...) ou path local (path_imagem_projeto...)
+    $link = isset($_POST['link']) ? trim($_POST['link']) : '';
+
+    function is_url($str) {
+        return (bool)preg_match('#^https?://#i', $str);
     }
+
+    function urlExiste200($url) {
+        $headers = @get_headers($url);
+        if (!$headers || !isset($headers[0])) return false;
+        return (strpos($headers[0], '200') !== false);
+    }
+
+    // tenta mapear URL -> caminho local quando possível (para ficar mais confiável)
+    // Ex: https://.../upload_pic/2026/resize_...  ->  /var/www/.../upload_pic/2026/resize_...
+    // (sem mexer no seu config, usa o que já existe: $link_imagem_projeto e $path_imagem_projeto)
+    $ok = false;
+
+    if ($link !== '') {
+        if (is_url($link)) {
+            // se for URL, primeiro tenta checar por HTTP
+            $ok = urlExiste200($link);
+
+            // se falhar e for URL do seu próprio servidor, tenta mapear para path local
+            if (!$ok) {
+                // tenta substituir base de URL pela base do path (quando o link começa com $link_imagem_projeto)
+                if (!empty($GLOBALS['link_imagem_projeto']) && !empty($GLOBALS['path_imagem_projeto']) && strpos($link, $GLOBALS['link_imagem_projeto']) === 0) {
+                    $local = str_replace($GLOBALS['link_imagem_projeto'], $GLOBALS['path_imagem_projeto'], $link);
+                    $ok = @file_exists($local);
+                }
+            }
+        } else {
+            // path local
+            $ok = @file_exists($link);
+        }
+    }
+
+    echo $ok ? "ok" : "nok";
     die();
 }
-if (isset($_POST['acao']) && $_POST['acao'] == "cadastrar") {
-    $id_colaborador = $_POST['id'];
-    $ano = date('Y');
+
+if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
+
+    $id_colaborador = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    $ano            = date('Y');
+    $tipo           = isset($_POST['tipo']) ? trim($_POST['tipo']) : '';
+    $time           = time();
+
+    // validações básicas (sem mudar regra de negócio)
+    if ($id_colaborador <= 0 || $tipo === '' || !isset($_FILES['foto'])) {
+        echo "";
+        die();
+    }
+
     $foto = $_FILES['foto'];
-    $tipo = $_POST['tipo'];
-    $time = time();
-    if (in_array(strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION)), array('txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xlms'))) {
-        $photo = arquivoPDF($foto, $baseDir, $link_arquivo);
-        $link_arquivo = $path_imagem_projeto .  $photo;
+
+    // validação de upload
+    if (!isset($foto['tmp_name']) || $foto['tmp_name'] === '' || !is_uploaded_file($foto['tmp_name'])) {
+        echo "";
+        die();
+    }
+
+    // segue mesma regra do front: até 5MB (mantém negócio)
+    if (!empty($foto['size']) && (int)$foto['size'] > 5000000) {
+        echo "";
+        die();
+    }
+
+    // extensões aceitas como "documento" (mantém sua lógica)
+    $docExts = array('txt','pdf','doc','docx','xls','xlsx','ppt','pptx','xlms');
+    $ext = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
+
+    // garante pasta do ano
+    if (!file_exists($path_imagem_projeto . "$ano/")) {
+        @mkdir($path_imagem_projeto . "$ano/", 0775, true);
+    }
+
+    // nome mais robusto (pequeno ajuste)
+    $seed = $time . '_' . mt_rand(1000, 9999);
+
+    $link_arquivo_retorno = '';
+    $photoParaDb = ''; // o que será gravado em foto_colaborador.foto
+
+    if (in_array($ext, $docExts, true)) {
+
+        // documento (PDF/Office)
+        $photoParaDb = arquivoPDF($foto, $baseDir, $path_imagem_projeto, $seed);
+        // retorna path local (como você já fazia nesta branch)
+        $link_arquivo_retorno = $path_imagem_projeto . $photoParaDb;
+
     } else {
-        redimensionar($foto, 800, $path_imagem_projeto . "", "$ano/resize_", $time);
-        $photo = redimensionar($foto, 150, $path_imagem_projeto . "", "$ano/thumbnail_", $time);
-        $foto = str_replace('thumbnail', 'resize', $photo);
-        $link_arquivo = $link_imagem_projeto . "upload_pic/" . $foto;
+
+        // imagem: mantém seu padrão (resize + thumbnail) e mantém DB com thumbnail
+        // (apenas organizando as variáveis)
+        Redimensionar($foto, 800, $path_imagem_projeto . "", "$ano/resize_", $seed);
+        $photoThumb = Redimensionar($foto, 150, $path_imagem_projeto . "", "$ano/thumbnail_", $seed);
+
+        // o seu padrão: salva thumbnail no BD e usa resize para link
+        $photoParaDb = $photoThumb;
+        $fotoResizeRel = str_replace('thumbnail', 'resize', $photoThumb);
+
+        // retorna URL (como você já fazia nesta branch)
+        $link_arquivo_retorno = $link_imagem_projeto . "upload_pic/" . $fotoResizeRel;
     }
+
+    // salva foto no BD (mesma tabela e campos)
     $crud = new crud('foto_colaborador');
-    $crud->inserir("id_colaborador,foto,tipo,tamanho", "'$id_colaborador','$photo','$tipo',350");
-    if ($tipo == 'RG') {
-        $id_campo = 7;
+    $crud->inserir("id_colaborador,foto,tipo,tamanho", "'$id_colaborador','$photoParaDb','$tipo',350");
+
+    // mapeamento de tipo -> id_campo (mesma regra, só mais simples)
+    $mapCampo = array(
+        'RG'         => 7,
+        'P'          => 5,
+        'RESIDENCIA' => 6,
+        'HABILITACAO'=> 7,
+        'CPF'        => 8,
+    );
+
+    if (isset($mapCampo[$tipo])) {
+        $id_campo = (int)$mapCampo[$tipo];
+        $date = date("Y-m-d H:i:s");
+        $crudPend = new crud('pend_cad');
+        $crudPend->atualizar("pendencia=0,data='$date'", "id_colaborador=$id_colaborador and id_campo = $id_campo");
     }
-    if ($tipo == 'P') {
-        $id_campo = 5;
-    }
-    if ($tipo == 'RESIDENCIA') {
-        $id_campo = 6;
-    }
-    if ($tipo == 'HABILITACAO') {
-        $id_campo = 7;
-    }
-    if ($tipo == 'CPF') {
-        $id_campo = 8;
-    }
-    $date = date("Y-m-d H:i:s");
-    $crud = new crud('pend_cad');
-    $crud->atualizar("pendencia=0,data='$date'", "id_colaborador=$id_colaborador and id_campo = $id_campo");
-    echo $link_arquivo;
+
+    // mantém retorno: o JS espera isso
+    echo $link_arquivo_retorno;
     die();
 }
 
@@ -100,18 +198,23 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
     die();
 }
 
-function arquivoPDF($foto, $baseDir, $path_imagem_projeto)
+/**
+ * [AJUSTE PEQUENO] arquivoPDF recebe um nome mais robusto quando passado
+ * (sem alterar regra de negócio: continua salvando na pasta do ano e retornando ano/arquivo.ext)
+ */
+function arquivoPDF($foto, $baseDir, $path_imagem_projeto, $seed = null)
 {
     $ano = date('Y');
     $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
-    $name = strtotime(date('Y-m-d H:i:s'));
+    $name = $seed ? $seed : strtotime(date('Y-m-d H:i:s'));
     $baseDir = dirname(__DIR__);
     $upload_dir = $path_imagem_projeto . "$ano/";
     if (!file_exists($upload_dir)) {
         mkdir($upload_dir, 0775, true);
     }
     $uploadfile = $upload_dir . $name . "." . $extensao;
-    move_uploaded_file($foto['tmp_name'], $uploadfile);
+
+    @move_uploaded_file($foto['tmp_name'], $uploadfile);
 
     return $ano . "/" . $name . "." . $extensao;
 }
@@ -166,25 +269,24 @@ $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
 require_once 'header.php';
 ?>
 
-
 <main class="container mt-5 pt-5">
     <div class="row g-4">
 
         <div class="col-md-4">
             <div class="card">
-                <div class="card-header">Nova Matrícula</div>
+                <div class="card-header">Novo Cadastro</div>
                 <div class="card-body">
                     <p>Se você nunca fez a pasta de oração pelo grupo de teatro Azerutan, clique abaixo para criar nova matrícula.</p>
-                    <a href="form_colaborador.php?novo=1" class="btn btn-success">Nova Matrícula</a>
+                    <a href="inscricao.php?novo=1" class="btn btn-success">Nova Matrícula</a>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card">
-                <div class="card-header">Lista de Candidatos</div>
+                <div class="card-header">Lista de projetos</div>
                 <div class="card-body">
                     <p>Clique no botão a seguir para exibir a lista de todas as pessoas matriculadas para A Paixão de Cristo deste ano.</p>
-                    <a href="lista.php" class="btn btn-success">Lista de Candidatos</a>
+                    <a href="projeto.php?id=<?php echo $_GET['projeto'];?>" class="btn btn-success">Lista de Projetos</a>
                 </div>
             </div>
         </div>
@@ -194,7 +296,7 @@ require_once 'header.php';
                 <div class="card-body">
                     <p>Em caso de problema na inscrição, acesse o grupo do WhatsApp da secretaria Azerutan.</p>
                     <a href="https://chat.whatsapp.com/CKvK1IcvC0E69CsnXZLtaC">
-                        <img src="https://paixaodecristodeigarassu.ki6.com.br/projeto/images/icone/whatsapp-icon-logo-BDC0A8063B-seeklogo.com.png" width="50" alt="WhatsApp">
+                        <img src="https://paixaodecristodeigarassu.ki6.com.br/projeto/images/icone/whatsapp-icon.png" width="50" alt="WhatsApp">
                     </a>
                 </div>
             </div>
@@ -364,22 +466,19 @@ require_once 'header.php';
                 // segurança básica no id
                 $id_colaborador = (int) $id_colaborador;
 
-                function urlExiste200(string $url): bool
+                function urlExiste200Local(string $url): bool
                 {
-                    // verifica headers; aceita qualquer linha com 200 OK (mesmo após redirecionamentos)
                     $headers = @get_headers($url, 1);
                     if (!$headers) return false;
 
-                    // pode vir uma string única ou array em redirecionamentos
                     if (is_array($headers)) {
                         foreach ($headers as $k => $v) {
-                            if (is_string($k) && stripos($k, 'HTTP/') === 0) { // segurança
+                            if (is_string($k) && stripos($k, 'HTTP/') === 0) {
                                 if (is_string($v) && strpos($v, '200') !== false) return true;
                             }
                             if (is_int($k) && is_string($v) && strpos($v, '200') !== false) return true;
                         }
                     } else {
-                        // fallback
                         return strpos($headers[0] ?? '', '200') !== false;
                     }
                     return false;
@@ -425,18 +524,14 @@ require_once 'header.php';
                     $urlResize  = $path_imagem_projeto . ltrim($fotoResize, '/');
                     $urlOrig    = $path_imagem_projeto . ltrim($fotoOrig,   '/');
 
-                    // checa existência online
                     $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
 
                     if ($urlValida) {
-                        // extensão segura
                         $ext = strtolower(pathinfo($fotoOrig, PATHINFO_EXTENSION));
 
-                        // se for documento, mostra ícone de documento
                         if (in_array($ext, ['txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xlms'], true)) {
                             echo "<img src='{$baseIcones}painelestudante_z.png' alt='Documento'>";
                         } else {
-                            // válido por 10 minutos
                             if ($diffMinutos < 10) {
                                 $restantes = 10 - $diffMinutos;
                                 echo "<img src='" . $link_imagem_projeto . "" . $fotoResize . "' data-toggle='tooltip' data-placement='top' title='A foto ficarÃ¡ disponÃ­vel por {$restantes} minuto(s).' alt='Foto TemporÃ¡ria'>";
@@ -445,12 +540,10 @@ require_once 'header.php';
                             }
                         }
                     } else {
-                        // não existe (404 ou outro erro)
                         echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
                     }
                 }
                 ?>
-
             </div>
 
             <h1 class="display-3 text-center mt-4">Realização</h1>
@@ -493,6 +586,7 @@ require_once 'header.php';
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../js/jquery.maskedinput-1.1.4.pack.js"></script>
 <script src="tts.js"></script>
+
 <script type="text/javascript">
     const handlePhone = (event) => {
         let input = event.target;
@@ -521,6 +615,11 @@ require_once 'header.php';
         speechSynthesis.speak(msg);
     }
 
+    /**
+     * [AJUSTE PEQUENO] startTimer mais estável:
+     * - troca setInterval de 15s por setTimeout (evita múltiplos reloads)
+     * - mantém áudio, modal, regra de 5MB e checagem seExiste
+     */
     async function startTimer() {
         var tipo = document.getElementById("tipo").value;
         if (tipo == '') {
@@ -528,40 +627,68 @@ require_once 'header.php';
             alert('Selecione o tipo do documento.');
             return false;
         }
+
         var formData = new FormData($('#formImagem')[0]);
         var file = formData.get('foto');
+
+        if (!file) {
+            falar('Selecione um arquivo.');
+            alert('Selecione um arquivo.');
+            return false;
+        }
+
         console.log('Tamanho do arquivo:', file.size);
+
         var meuarquivo = file.size / 1000000;
         if (file.size > 5000000) {
             falar('Selecione um arquivo de imagem até 5MB. Seu arquivo tem ' + meuarquivo + 'MB');
             alert('Selecione um arquivo de imagem até 5MB. Seu arquivo tem ' + meuarquivo + 'MB');
             return false;
         }
+
         abrirModal();
         falar('Aguarde enquanto a foto está sendo carregada');
         document.getElementById('lbmeuarquivo').textContent = 'Meu arquivo tem ' + meuarquivo.toString().substring(0, 4) + 'MB';
 
         let tempoRestante = tempoInicial;
-        setInterval(async () => {
+
+        // contador visível
+        const intervaloContador = setInterval(() => {
             tempoRestante--;
-            const minutos = Math.floor(tempoRestante / 60);
             const segundos = tempoRestante % 60;
             document.getElementById('temporizador').textContent = segundos + ' segundos...';
+            if (tempoRestante <= 0) {
+                clearInterval(intervaloContador);
+            }
         }, 1000);
 
-        setInterval(async () => {
+        // fallback de recarregar em 15s (mesma intenção original, sem ficar criando múltiplos intervals)
+        const reloadTimeout = setTimeout(() => {
             fecharModal();
             location.reload();
         }, 15000);
 
+        // 1) envia upload
         var link = await salvar5sec(formData);
-        console.log('a imagem existe?' + link);
+
+        // se não retornou link, deixa o fallback recarregar e avisa
+        if (!link || (typeof link === 'string' && link.trim() === '')) {
+            falar('Houve um problema ao enviar o arquivo. Se continuar, tente outro telefone.');
+            return false;
+        }
+
+        // 2) checa se existe
         var existe = await existe5sec(link);
+
         if (existe == 'ok') {
+            clearTimeout(reloadTimeout);
+            clearInterval(intervaloContador);
             fecharModal();
             location.reload();
         }
+
         if (existe == 'nok') {
+            // mantém sua regra de voz
             falar('A imagem não carregou por que a internet está ruim, se o problema continuar, envie o documento em outro telefone.');
         }
     }
@@ -618,5 +745,4 @@ require_once 'header.php';
     }
 </script>
 </body>
-
 </html>

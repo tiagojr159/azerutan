@@ -1,5 +1,5 @@
 <?php
-
+//crud_consulta.php
 
 require_once 'config/conexao.class.php';
 require_once 'config/crud.class.php';
@@ -21,62 +21,91 @@ if ($_GET['action'] == "consultaNome") {
 	}
 }
 
+if ($_GET['action'] === 'valida_renovacao') {
 
-if ($_GET['action'] == "valida_renovacao") {
+    header('Content-Type: application/json; charset=utf-8');
 
+    function resp($ok, $msg, $redirect = '') {
+        echo json_encode([
+            'ok' => $ok,
+            'msg' => $msg,
+            'redirect' => $redirect
+        ]);
+        exit();
+    }
 
-	$id_projeto = $_GET['projeto'];
-	if (empty($_GET['id_colaborador'])) {
-		$partes = explode("|", $_GET['nome']);
-		$id_colaborador = $partes[0];
-	} else {
-		$id_colaborador = $_GET['id_colaborador'];
-	}
+    $id_projeto     = (int)($_GET['projeto'] ?? 0);
+    $id_colaborador = (int)($_GET['id_colaborador'] ?? 0);
+    $nascimento_in  = trim($_GET['data_nascimento'] ?? '');
 
+    if ($id_projeto <= 0) {
+        resp(false, 'Projeto inválido.');
+    }
 
-	$consulta_colaborador = mysqli_query($con->connect(), "SELECT * FROM colaborador where id = '" . $id_colaborador . "' || nome = '" . $id_colaborador . "'"); // query que busca todos os dados da tabela PRODUTO
-	$campo_consulta_colab = mysqli_num_rows($consulta_colaborador);
-	$id_colaborador = 0;
-	while ($campo_usuario = mysqli_fetch_array($consulta_colaborador)) {
-		$id_colaborador = $campo_usuario['id'];
-	}
-	if ($campo_consulta_colab == 0) {
-		echo "<script>
-		alert('O Nome que você digitou não está cadastrado, por favor faça seu cadastro.');
-		 window.history.back();
-		</script>";
-		exit();
-	}
+    if ($id_colaborador <= 0) {
+        resp(false, 'Cadastro não encontrado.', "inscricao.php?novo=1&id_projeto=$id_projeto");
+    }
 
-	$consulta_matricula = mysqli_query($con->connect(), "SELECT * FROM ano_projeto 
-	where id_colaborador = '" . $id_colaborador . "' and id_projeto='$id_projeto' "); // query que busca todos os dados da tabela PRODUTO
-	$campo_matricula = mysqli_num_rows($consulta_matricula);
+    // busca colaborador
+    $q = mysqli_query(
+        $con->connect(),
+        "SELECT nascimento FROM colaborador WHERE id = $id_colaborador LIMIT 1"
+    );
 
+    if (!$q || mysqli_num_rows($q) === 0) {
+        resp(false, 'Colaborador não encontrado.', "inscricao.php?novo=1&id_projeto=$id_projeto");
+    }
 
-	if ($campo_matricula > 0) {
-		echo "<script>
-		alert('Sua matrícula já tinha sido renovada anteriomente, verifique se há pendência de documentação.');
-		location='form_foto_documentacao.php?id=" . $id_colaborador . "';
-		</script>";
-		exit();
-	}
+    $c = mysqli_fetch_assoc($q);
+    $nascimento_bd = date('Y-m-d', strtotime($c['nascimento']));
 
-	$consulta_vagas = mysqli_query($con->connect(), "SELECT * FROM colaborador where id = upper('" . $id_colaborador . "') order by id limit 1"); // query que busca todos os dados da tabela PRODUTO
-	$campo = mysqli_fetch_array($consulta_vagas);
-	$id_colaborador = $campo['id'];
+    if ($nascimento_bd !== $nascimento_in) {
+        resp(false, 'Data de nascimento não confere.');
+    }
 
-	$crud = new crud('ano_projeto');
-	$crud->inserir("ano, situacao, id_colaborador, tipo, id_projeto", "'" . $anodata . "', 'PENDENTE', '" . $campo['id'] . "', 'C','" . $id_projeto . "' ");
+    $ano = date('Y');
 
-	$crud = new crud('pend_cad');
-	$crud->atualizar("pendencia='1',data='$data'", "id_colaborador='$id_colaborador' and id_campo in(3,6)");
+    // evita duplicidade
+    $existe = mysqli_query(
+        $con->connect(),
+        "SELECT 1 FROM ano_projeto
+         WHERE id_colaborador = $id_colaborador
+           AND id_projeto = $id_projeto
+           AND ano = '$ano'
+         LIMIT 1"
+    );
 
+    if (mysqli_num_rows($existe) > 0) {
+        resp(
+            false,
+            'Sua matrícula já foi renovada.',
+            "form_foto_documentacao.php?id=$id_colaborador&projeto=$id_projeto"
+        );
+    }
 
-	echo "<script>
-				  alert('Matriculado com sucesso!');
-				  location='form_foto_documentacao.php?id=" . $id_colaborador . "&projeto=" . $id_projeto . "';
-				  </script>";
+    // insere renovação
+    $crud = new crud('ano_projeto');
+    $crud->inserir(
+        "ano, situacao, id_colaborador, tipo, id_projeto",
+        "'$ano','PENDENTE',$id_colaborador,'C',$id_projeto"
+    );
+
+    // ativa pendências iniciais
+    $data = date('Y-m-d H:i:s');
+    $crud = new crud('pend_cad');
+    $crud->atualizar(
+        "pendencia=1, data='$data'",
+        "id_colaborador=$id_colaborador AND id_campo IN (3,6)"
+    );
+
+    resp(
+        true,
+        'Matrícula renovada com sucesso!',
+        "form_foto_documentacao.php?id=$id_colaborador&projeto=$id_projeto"
+    );
 }
+
+
 
 
 if ($_GET['action'] == "valida_cpf") {
