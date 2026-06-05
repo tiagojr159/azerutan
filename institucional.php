@@ -108,6 +108,92 @@ include 'header.php';
         border-color: var(--primary);
     }
 
+
+
+    .hero-summary {
+        margin-top: 1.25rem;
+        max-width: 980px;
+        border-radius: .9rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, .16);
+        border: 1px solid rgba(255, 255, 255, .24);
+    }
+
+    .hero-summary p {
+        margin: 0;
+    }
+
+    .content-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .content-block {
+        border: 1px solid #e2ebed;
+        border-radius: .8rem;
+        padding: 1rem;
+        background: #fbfdfd;
+    }
+
+    .content-block p:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-lead {
+        font-size: 1.03rem;
+        color: #34484d;
+    }
+
+    .tab-panel {
+        display: none;
+    }
+
+    .tab-panel.is-active {
+        display: block;
+    }
+
+    .document-index button.nav-link {
+        cursor: pointer;
+    }
+
+    .document-index .external-link {
+        text-decoration: underline;
+    }
+
+    .document-index {
+        position: sticky;
+        top: 72px;
+        z-index: 10;
+        padding: .75rem;
+        background: rgba(244, 247, 248, .96);
+        backdrop-filter: blur(8px);
+        border: 1px solid #dbe5e7;
+        border-radius: .9rem;
+    }
+
+    .az-document-section {
+        display: block;
+        margin-top: 1.25rem;
+        scroll-margin-top: 120px;
+    }
+
+    .doc-page__content {
+        display: block;
+    }
+
+    .source-list a {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .source-url {
+        display: block;
+        margin-top: .2rem;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+        font-size: .86rem;
+    }
+
     .timeline {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -251,44 +337,96 @@ include 'header.php';
 <main class="institutional-wrap">
     <div class="container">
         <section class="institutional-hero">
-            <span class="hero-pill">Dossiê institucional e acervo documental</span>
+            <span class="hero-pill">História, cultura, formação, fé e documentação pública</span>
             <h1>Associação Cultural Azerutan</h1>
             <p>
-                Página institucional consolidada com o conteúdo do dossiê de fontes públicas do Grupo Teatral Azerutan
-                e com a íntegra visual do arquivo de evidência de produtor cultural. O material reúne trajetória,
-                anterioridade de uso do nome, recortes públicos, registros oficiais e documentação de apoio.
+                Página institucional completa, construída pela soma do texto institucional anterior com o conteúdo dos
+                dois PDFs indicados. O arquivo reúne histórico da associação, atuação cultural, formação artística,
+                sustentabilidade, estrutura administrativa, dossiê de fontes públicas, páginas visuais dos documentos,
+                links, recortes e evidências para apresentar o máximo possível do trabalho realizado pela Azerutan.
             </p>
             <div class="hero-actions">
-                <a class="btn btn-light" href="#conteudo-documental">Ver conteúdo documental</a>
-                <a class="btn btn-outline-light" href="#paginas-pdf">Ver páginas dos PDFs</a>
+                <a class="btn btn-light" href="#conteudo-documental">Ver abas de conteúdo</a>
+                <a class="btn btn-outline-light" href="dossie_grupo_teatral_azerutan_fontes_publicas%20%281%29.pdf" target="_blank" rel="noopener">Abrir PDF dossiê</a>
+                <a class="btn btn-outline-light" href="evidencia%20produtor%20cultural.pdf" target="_blank" rel="noopener">Abrir PDF evidência</a>
             </div>
-            <div class="stat-grid" aria-label="Resumo do acervo">
-                <div class="stat-pill"><strong>1985</strong><span>origem histórica indicada</span></div>
-                <div class="stat-pill"><strong>20</strong><span>recortes documentais</span></div>
-                <div class="stat-pill"><strong>23</strong><span>páginas do dossiê</span></div>
-                <div class="stat-pill"><strong>22</strong><span>páginas de evidências</span></div>
+            <div class="hero-summary" aria-label="Resumo textual do acervo">
+                <p><strong>Conteúdo preservado:</strong> texto institucional completo, dossiê textual extraído página por página, recortes de fontes públicas, links de consulta e imagens de todas as páginas dos dois PDFs.</p>
             </div>
         </section>
     </div>
 
     <div class="container az-section">
-        <ul class="nav nav-tabs az-tabs" id="institucionalTabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="aba-visao-tab" data-toggle="tab" href="#aba-visao" role="tab" aria-controls="aba-visao" aria-selected="true">Visão geral</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="aba-dossie-tab" data-toggle="tab" href="#aba-dossie" role="tab" aria-controls="aba-dossie" aria-selected="false">Dossiê textual completo</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="aba-pdfs-tab" data-toggle="tab" href="#aba-pdfs" role="tab" aria-controls="aba-pdfs" aria-selected="false">Páginas dos PDFs</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="aba-fontes-tab" data-toggle="tab" href="#aba-fontes" role="tab" aria-controls="aba-fontes" aria-selected="false">Fontes públicas</a>
-            </li>
-        </ul>
+        <nav class="nav az-tabs document-index" id="conteudo-documental" aria-label="Abas do conteúdo institucional">
+            <button class="nav-link active" type="button" data-tab-target="aba-institucional">Institucional completo</button>
+            <button class="nav-link" type="button" data-tab-target="aba-visao">História e linha do tempo</button>
+            <button class="nav-link" type="button" data-tab-target="aba-dossie">Dossiê textual completo</button>
+            <button class="nav-link" type="button" data-tab-target="aba-pdfs">Páginas dos PDFs</button>
+            <button class="nav-link" type="button" data-tab-target="aba-fontes">Fontes públicas</button>
+            <button class="nav-link" type="button" data-tab-target="aba-tudo">Mostrar tudo</button>
+            <a class="nav-link external-link" href="dossie_grupo_teatral_azerutan_fontes_publicas%20%281%29.pdf" target="_blank" rel="noopener">Abrir PDF dossiê</a>
+            <a class="nav-link external-link" href="evidencia%20produtor%20cultural.pdf" target="_blank" rel="noopener">Abrir PDF evidência</a>
+        </nav>
 
-        <div class="tab-content" id="conteudo-documental">
-            <section class="tab-pane fade show active" id="aba-visao" role="tabpanel" aria-labelledby="aba-visao-tab">
+        <div class="document-content">
+
+            <section class="az-document-section tab-panel is-active" id="aba-institucional">
+                <div class="az-panel">
+                    <h2>Texto institucional completo da Associação Cultural Azerutan</h2>
+                    <p class="section-lead">
+                        Esta seção preserva e soma o texto institucional que já existia no arquivo original,
+                        agora organizado em categorias para apresentar a história, a missão, a atuação cultural,
+                        a estrutura administrativa, a transparência e o compromisso social da entidade.
+                    </p>
+
+                    <div class="content-grid">
+                        <article class="content-block">
+                            <h3>Fundação, sede e propósito</h3>
+                            <p>A <strong>Associação Cultural Azerutan</strong>, fundada oficialmente em <strong>19 de novembro de 2023</strong>, é uma entidade civil, <strong>sem fins lucrativos</strong>, com sede na Rua Guiana Francesa, nº 125, bairro Agamenon Magalhães, Igarassu-PE. Seu propósito é representar, fortalecer e difundir a produção artística e cultural da cidade, promovendo ações que unem arte, educação, sustentabilidade e fé.</p>
+                            <p>Com sede fixa, diretoria eleita, projetos em andamento e reconhecimento público, a Azerutan se firma como uma das principais referências de produção cultural em Igarassu. Seu trabalho reflete a alma da cidade: criativa, solidária, devota e resistente.</p>
+                        </article>
+
+                        <article class="content-block">
+                            <h3>Origem teatral e Paixão de Cristo de Igarassu</h3>
+                            <p>Desde sua origem, a Azerutan nasce do legado do histórico <strong>Grupo Teatral Azerutan</strong>, ativo desde 1985, cuja trajetória está profundamente ligada à encenação da <strong>Paixão de Cristo de Igarassu</strong>. O espetáculo, realizado anualmente no Sítio Histórico, é um marco da cultura pernambucana, reunindo centenas de artistas e milhares de espectadores em um evento que une religiosidade, arte e compromisso social.</p>
+                            <p>Entre suas atividades mais emblemáticas está a <strong>Paixão de Cristo de Igarassu</strong>, produzida em parceria com a Prefeitura Municipal, por meio da Secretaria de Turismo, Cultura e Patrimônio Histórico. A encenação conta com um elenco de mais de 150 artistas e técnicos locais, reafirmando o compromisso da entidade com o fortalecimento da economia criativa e a geração de emprego e renda através da arte.</p>
+                            <p>O trabalho da Azerutan é reconhecido pela integração entre fé e cultura. A <strong>Paixão de Cristo de Igarassu</strong> simboliza essa união: um espetáculo que ultrapassa a encenação para se tornar vivência comunitária. Artistas, costureiras, técnicos, voluntários e famílias inteiras participam da produção, transformando a cidade em um palco de espiritualidade e arte.</p>
+                        </article>
+
+                        <article class="content-block">
+                            <h3>Missão cultural, formação e inclusão</h3>
+                            <p>A associação tem como missão <strong>promover a cultura e o desenvolvimento humano</strong> por meio de cursos, oficinas, espetáculos e ações educativas voltadas para a comunidade. Seu estatuto prevê a realização de atividades nas áreas de <strong>música, dança, teatro, literatura, circo, cinema, artesanato e audiovisual</strong>, buscando sempre a valorização da arte local e o fortalecimento dos laços comunitários.</p>
+                            <p>A associação atua também como espaço de formação, oferecendo <strong>cursos e oficinas de teatro, dança, produção cultural e figurino</strong>, fomentando a capacitação de jovens e adultos. O objetivo é transformar a arte em instrumento de cidadania e inclusão social, abrindo caminhos para novas gerações de artistas, técnicos e gestores culturais.</p>
+                            <p>Além da Semana Santa, a associação mantém <strong>programações anuais</strong> de formação artística, festivais e ações socioculturais que valorizam o patrimônio material e imaterial de Igarassu. Sua presença é constante em escolas, praças e espaços públicos, com o objetivo de democratizar o acesso à cultura e ampliar o repertório estético da população.</p>
+                        </article>
+
+                        <article class="content-block">
+                            <h3>Sustentabilidade e responsabilidade social</h3>
+                            <p>Além de seu caráter artístico, a Azerutan pauta-se na <strong>sustentabilidade e responsabilidade social</strong>. Seus projetos buscam alinhar a arte à preservação ambiental, incentivando o reaproveitamento de materiais, o uso consciente de recursos e o engajamento da comunidade em práticas ecológicas e solidárias.</p>
+                            <p>O compromisso com a <strong>educação e a sustentabilidade</strong> norteia também projetos voltados à conscientização ambiental, incentivando o plantio de árvores, a coleta seletiva e o uso de materiais recicláveis nas montagens teatrais e eventos culturais. Assim, arte e meio ambiente caminham juntos como expressão do cuidado com a casa comum e com as futuras gerações.</p>
+                        </article>
+
+                        <article class="content-block">
+                            <h3>Estrutura institucional e diretoria</h3>
+                            <p>Na dimensão institucional, a Azerutan é dirigida por uma <strong>assembleia geral e uma diretoria eleita</strong>, composta por presidente, secretário, tesoureiro e conselho fiscal, todos atuando de forma voluntária, conforme previsto em seu estatuto. O presidente atual é <strong>Tiago Severino Antônio Júnior</strong>, produtor cultural e diretor teatral, responsável pela condução administrativa e artística da entidade.</p>
+                            <p>Em 2024, a entidade consolidou sua estrutura jurídica e financeira, firmando contratos oficiais e ampliando suas parcerias com o poder público e o setor privado. Essa formalização garantiu autonomia e legitimidade institucional para representar legalmente o grupo teatral e seus associados em futuras produções culturais e educacionais.</p>
+                        </article>
+
+                        <article class="content-block">
+                            <h3>Transparência, ética e aplicação dos recursos</h3>
+                            <p>A transparência e a ética administrativa são pilares da instituição. Seus estatutos definem claramente a aplicação de recursos em atividades culturais, vedando qualquer distribuição de lucros ou vantagens pessoais a seus membros. Todos os recursos financeiros captados, por meio de convênios, doações, subvenções ou parcerias, são aplicados integralmente na manutenção e no desenvolvimento de suas finalidades culturais e sociais.</p>
+                        </article>
+
+                        <article class="content-block">
+                            <h3>Arte como serviço, missão e vocação</h3>
+                            <p>Na visão da Associação Cultural Azerutan, <strong>a arte é serviço, missão e vocação</strong>. Cada espetáculo, oficina ou projeto nasce do desejo de servir à comunidade e fortalecer os valores humanos, espirituais e sociais. A instituição acredita que a transformação começa pela cultura, pela educação e pela fé.</p>
+                            <p>Por meio da arte e da fé, a Associação Cultural Azerutan segue construindo pontes entre o passado e o futuro, celebrando a vida, a esperança e o compromisso com o bem comum, um testemunho vivo de que <strong>a cultura é o coração que pulsa em Igarassu</strong>.</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="az-document-section tab-panel" id="aba-visao">
                 <div class="az-panel">
                     <h2>Identidade institucional</h2>
                     <p>
@@ -361,7 +499,7 @@ include 'header.php';
                 </div>
             </section>
 
-            <section class="tab-pane fade" id="aba-dossie" role="tabpanel" aria-labelledby="aba-dossie-tab">
+            <section class="az-document-section tab-panel" id="aba-dossie">
                 <div class="az-panel">
                     <h2>Dossiê de fontes públicas - texto completo</h2>
                     <p>
@@ -373,11 +511,11 @@ include 'header.php';
                     </div>
 
             <article class="doc-page" id="dossie-pagina-1">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-1" aria-expanded="false" aria-controls="texto-dossie-1">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 01</span>
                     <span class="doc-page__title">Capa, objetivo e síntese documental</span>
-                </button>
-                <div id="texto-dossie-1" class="collapse show">
+                </div>
+                <div id="texto-dossie-1" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 1
 Dossiê de Evidências Públicas
 Grupo Teatral Azerutan
@@ -399,11 +537,11 @@ Data de elaboração: maio de 2026</pre>
 
 
             <article class="doc-page" id="dossie-pagina-2">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-2" aria-expanded="false" aria-controls="texto-dossie-2">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 02</span>
                     <span class="doc-page__title">Resumo cronológico das evidências</span>
-                </button>
-                <div id="texto-dossie-2" class="collapse show">
+                </div>
+                <div id="texto-dossie-2" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 2
 Resumo cronológico das evidências
 Esta linha do tempo organiza as principais provas por período. As páginas seguintes trazem os recortes
@@ -439,11 +577,11 @@ como complemento.</pre>
 
 
             <article class="doc-page" id="dossie-pagina-3">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-3" aria-expanded="true" aria-controls="texto-dossie-3">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 03</span>
                     <span class="doc-page__title">Recorte documental 01 - Paixão de Cristo em Igarassu completa 33 anos</span>
-                </button>
-                <div id="texto-dossie-3" class="collapse">
+                </div>
+                <div id="texto-dossie-3" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 3
 Recorte documental 01 - Paixão de Cristo em Igarassu
 completa 33 anos
@@ -478,11 +616,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-4">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-4" aria-expanded="true" aria-controls="texto-dossie-4">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 04</span>
                     <span class="doc-page__title">Recorte documental 02 - Paixão de Cristo em Igarassu completa 33 anos</span>
-                </button>
-                <div id="texto-dossie-4" class="collapse">
+                </div>
+                <div id="texto-dossie-4" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 4
 Recorte documental 02 - Paixão de Cristo em Igarassu
 completa 33 anos
@@ -513,11 +651,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-5">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-5" aria-expanded="true" aria-controls="texto-dossie-5">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 05</span>
                     <span class="doc-page__title">Recorte documental 03 - Igarassu renova a tradição da Semana Santa com a realização da Paixão de Cristo</span>
-                </button>
-                <div id="texto-dossie-5" class="collapse">
+                </div>
+                <div id="texto-dossie-5" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 5
 Recorte documental 03 - Igarassu renova a tradição da
 Semana Santa com a realização da Paixão de Cristo
@@ -546,11 +684,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-6">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-6" aria-expanded="true" aria-controls="texto-dossie-6">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 06</span>
                     <span class="doc-page__title">Recorte documental 04 - Resultado preliminar - Lei Aldir Blanc - Edital nº 005/2020</span>
-                </button>
-                <div id="texto-dossie-6" class="collapse">
+                </div>
+                <div id="texto-dossie-6" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 6
 Recorte documental 04 - Resultado preliminar - Lei
 Aldir Blanc - Edital nº 005/2020
@@ -580,11 +718,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-7">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-7" aria-expanded="true" aria-controls="texto-dossie-7">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 07</span>
                     <span class="doc-page__title">Recorte documental 05 - Eleição das Comissões Setoriais do Conselho Estadual de Política Cultural de Pernambuco</span>
-                </button>
-                <div id="texto-dossie-7" class="collapse">
+                </div>
+                <div id="texto-dossie-7" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 7
 Recorte documental 05 - Eleição das Comissões
 Setoriais do Conselho Estadual de Política Cultural de
@@ -614,11 +752,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-8">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-8" aria-expanded="true" aria-controls="texto-dossie-8">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 08</span>
                     <span class="doc-page__title">Recorte documental 06 - Inexigibilidade nº 028/2023 - Processo nº 042/2023</span>
-                </button>
-                <div id="texto-dossie-8" class="collapse">
+                </div>
+                <div id="texto-dossie-8" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 8
 Recorte documental 06 - Inexigibilidade nº 028/2023 -
 Processo nº 042/2023
@@ -649,11 +787,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-9">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-9" aria-expanded="true" aria-controls="texto-dossie-9">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 09</span>
                     <span class="doc-page__title">Recorte documental 07 - Relação de licitações - Inexigibilidade 2023</span>
-                </button>
-                <div id="texto-dossie-9" class="collapse">
+                </div>
+                <div id="texto-dossie-9" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 9
 Recorte documental 07 - Relação de licitações -
 Inexigibilidade 2023
@@ -684,11 +822,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-10">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-10" aria-expanded="true" aria-controls="texto-dossie-10">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 10</span>
                     <span class="doc-page__title">Recorte documental 08 - A Paixão de Cristo de Igarassu - Ano 2019</span>
-                </button>
-                <div id="texto-dossie-10" class="collapse">
+                </div>
+                <div id="texto-dossie-10" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 10
 Recorte documental 08 - A Paixão de Cristo de
 Igarassu - Ano 2019
@@ -715,11 +853,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-11">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-11" aria-expanded="true" aria-controls="texto-dossie-11">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 11</span>
                     <span class="doc-page__title">Recorte documental 09 - Paixão de Cristo: Igarassu tem teatro musical interativo e diversidade</span>
-                </button>
-                <div id="texto-dossie-11" class="collapse">
+                </div>
+                <div id="texto-dossie-11" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 11
 Recorte documental 09 - Paixão de Cristo: Igarassu
 tem teatro musical interativo e diversidade
@@ -747,11 +885,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-12">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-12" aria-expanded="true" aria-controls="texto-dossie-12">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 12</span>
                     <span class="doc-page__title">Recorte documental 10 - Município de Igarassu 062/2024</span>
-                </button>
-                <div id="texto-dossie-12" class="collapse">
+                </div>
+                <div id="texto-dossie-12" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 12
 Recorte documental 10 - Município de Igarassu
 062/2024
@@ -781,11 +919,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-13">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-13" aria-expanded="true" aria-controls="texto-dossie-13">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 13</span>
                     <span class="doc-page__title">Recorte documental 11 - Contratação 062/2024</span>
-                </button>
-                <div id="texto-dossie-13" class="collapse">
+                </div>
+                <div id="texto-dossie-13" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 13
 Recorte documental 11 - Contratação 062/2024
 Fonte GanhaLicita / PNCP
@@ -813,11 +951,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-14">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-14" aria-expanded="true" aria-controls="texto-dossie-14">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 14</span>
                     <span class="doc-page__title">Recorte documental 12 - Preparativos de Páscoa em Igarassu tem empreendedorismo e programação cultural</span>
-                </button>
-                <div id="texto-dossie-14" class="collapse">
+                </div>
+                <div id="texto-dossie-14" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 14
 Recorte documental 12 - Preparativos de Páscoa em
 Igarassu tem empreendedorismo e programação
@@ -846,11 +984,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-15">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-15" aria-expanded="true" aria-controls="texto-dossie-15">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 15</span>
                     <span class="doc-page__title">Recorte documental 13 - Município de Igarassu 098/2025</span>
-                </button>
-                <div id="texto-dossie-15" class="collapse">
+                </div>
+                <div id="texto-dossie-15" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 15
 Recorte documental 13 - Município de Igarassu
 098/2025
@@ -881,11 +1019,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-16">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-16" aria-expanded="true" aria-controls="texto-dossie-16">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 16</span>
                     <span class="doc-page__title">Recorte documental 14 - Publicação de contratação - Paixão de Cristo de Igarassu 2025</span>
-                </button>
-                <div id="texto-dossie-16" class="collapse">
+                </div>
+                <div id="texto-dossie-16" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 16
 Recorte documental 14 - Publicação de contratação -
 Paixão de Cristo de Igarassu 2025
@@ -916,11 +1054,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-17">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-17" aria-expanded="true" aria-controls="texto-dossie-17">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 17</span>
                     <span class="doc-page__title">Recorte documental 15 - Espetáculo da Paixão de Cristo de Igarassu movimenta a cidade com tradição</span>
-                </button>
-                <div id="texto-dossie-17" class="collapse">
+                </div>
+                <div id="texto-dossie-17" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 17
 Recorte documental 15 - Espetáculo da Paixão de
 Cristo de Igarassu movimenta a cidade com tradição
@@ -947,11 +1085,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-18">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-18" aria-expanded="true" aria-controls="texto-dossie-18">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 18</span>
                     <span class="doc-page__title">Recorte documental 16 - Em Igarassu, Paixão de Cristo leva emoção e interatividade com o público</span>
-                </button>
-                <div id="texto-dossie-18" class="collapse">
+                </div>
+                <div id="texto-dossie-18" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 18
 Recorte documental 16 - Em Igarassu, Paixão de Cristo
 leva emoção e interatividade com o público
@@ -979,11 +1117,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-19">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-19" aria-expanded="true" aria-controls="texto-dossie-19">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 19</span>
                     <span class="doc-page__title">Recorte documental 17 - Paixão de Cristo movimentou economia criativa de Igarassu</span>
-                </button>
-                <div id="texto-dossie-19" class="collapse">
+                </div>
+                <div id="texto-dossie-19" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 19
 Recorte documental 17 - Paixão de Cristo movimentou
 economia criativa de Igarassu
@@ -1010,11 +1148,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-20">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-20" aria-expanded="true" aria-controls="texto-dossie-20">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 20</span>
                     <span class="doc-page__title">Recorte documental 18 - Maior espetáculo de Páscoa do Litoral Norte acontece em Igarassu</span>
-                </button>
-                <div id="texto-dossie-20" class="collapse">
+                </div>
+                <div id="texto-dossie-20" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 20
 Recorte documental 18 - Maior espetáculo de Páscoa
 do Litoral Norte acontece em Igarassu
@@ -1042,11 +1180,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-21">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-21" aria-expanded="true" aria-controls="texto-dossie-21">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 21</span>
                     <span class="doc-page__title">Recorte documental 19 - Portaria 012 - Chamamento Público nº 002/2024 - PNAB</span>
-                </button>
-                <div id="texto-dossie-21" class="collapse">
+                </div>
+                <div id="texto-dossie-21" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 21
 Recorte documental 19 - Portaria 012 - Chamamento
 Público nº 002/2024 - PNAB
@@ -1075,11 +1213,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-22">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-22" aria-expanded="true" aria-controls="texto-dossie-22">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 22</span>
                     <span class="doc-page__title">Recorte documental 20 - Paixão de Cristo de Igarassu - Azerutan</span>
-                </button>
-                <div id="texto-dossie-22" class="collapse">
+                </div>
+                <div id="texto-dossie-22" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 22
 Recorte documental 20 - Paixão de Cristo de Igarassu -
 Azerutan
@@ -1106,11 +1244,11 @@ documental. Recomenda-se guardar também o arquivo/print original da página no 
 
 
             <article class="doc-page" id="dossie-pagina-23">
-                <button class="doc-page__button" type="button" data-toggle="collapse" data-target="#texto-dossie-23" aria-expanded="true" aria-controls="texto-dossie-23">
+                <div class="doc-page__button">
                     <span class="doc-page__number">Página 23</span>
                     <span class="doc-page__title">Conclusão, orientação de uso e fontes públicas</span>
-                </button>
-                <div id="texto-dossie-23" class="collapse">
+                </div>
+                <div id="texto-dossie-23" class="doc-page__content">
                     <pre class="doc-text">Dossiê de fontes públicas - Grupo Teatral Azerutan Página 23
 Conclusão e orientação de uso
 O conjunto de fontes públicas reunidas sustenta a narrativa de que o nome Grupo Teatral Azerutan não
@@ -1165,7 +1303,7 @@ Nota: este dossiê é uma organização documental de pesquisa pública; não su
                 </div>
             </section>
 
-            <section class="tab-pane fade" id="aba-pdfs" role="tabpanel" aria-labelledby="aba-pdfs-tab">
+            <section class="az-document-section tab-panel" id="aba-pdfs">
                 <div class="az-panel" id="paginas-pdf">
                     <h2>Arquivo visual integral dos PDFs</h2>
                     <p>
@@ -1453,7 +1591,7 @@ Nota: este dossiê é uma organização documental de pesquisa pública; não su
                 </div>
             </section>
 
-            <section class="tab-pane fade" id="aba-fontes" role="tabpanel" aria-labelledby="aba-fontes-tab">
+            <section class="az-document-section tab-panel" id="aba-fontes">
                 <div class="az-panel">
                     <h2>Fontes públicas utilizadas no dossiê</h2>
                     <p>
@@ -1461,26 +1599,26 @@ Nota: este dossiê é uma organização documental de pesquisa pública; não su
                         clicável para facilitar conferência, protocolo e guarda documental.
                     </p>
                     <ol class="source-list">
-                        <li><a target="_blank" rel="noopener" href="https://www.diariodepernambuco.com.br/noticia/vidaurbana/2018/03/paixao-de-cristo-em-igarassu-completa-33-anos.html">Diário de Pernambuco - Paixão de Cristo em Igarassu completa 33 anos</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/paixao-de-cristo-em-igarassu-completa-33-anos/">Prefeitura Municipal de Igarassu - Paixão de Cristo em Igarassu completa 33 anos</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/igarassu-renova-a-tradicao-da-semana-santa-com-a-realizacao-da-paixao-de-cristo/">Prefeitura Municipal de Igarassu - Igarassu renova a tradição da Semana Santa</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/wp-content/uploads/2020/12/Munici%CC%81pio-de-Igarassu-dia%CC%81rio-oficial.pdf">Diário Oficial / Prefeitura de Igarassu - Resultado preliminar - Lei Aldir Blanc</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://www.cultura.pe.gov.br/wp-content/uploads/2021/08/8-HABILITACAO-POS-RECURSOS-ELEICOES-SETORIAIS-CEPC.pdf">Secult-PE / FUNDARPE - Eleições Setoriais do CEPC</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://www-storage.voxtecnologia.com.br/?f=365&i=publicado_90162_2023-04-06_8033ac7059734509e9614249db1b1fbf.pdf&m=sigpub.publicacao">AMUPE - Inexigibilidade nº 028/2023</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://transparencia.systemainformatica.com.br/entidade/igarassu/upload/20230827114025_INEXIGIBILIDADE_2023.pdf">Portal de Transparência / Prefeitura de Igarassu - Inexigibilidade 2023</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=qcCKS19_lC4">YouTube - Canal Grupo Azerutan - A Paixão de Cristo de Igarassu - Ano 2019</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/paixao-de-cristo-igarassu-tem-teatro-musical-interativo-e-diversidade/">Prefeitura Municipal de Igarassu - Teatro musical interativo e diversidade</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://bnccompras.com/DirectBuy/DirectBuyView?param1=%5Bgkz%5DJyiwCnllTuinRPwz3K2_bi5oZCi23z0UIdpL4S52Ev0i4R9hEFB7ZVSx7jcYbl4tiGDULY7w3ZXqcBtuydaADeHJ08pKX07fPQNWge1PBXg%3D">BNC Compras - Município de Igarassu 062/2024</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://ganhalicita.com.br/contratacoes/0486db51-46d7-4ee9-8a5f-7917e01fe052/">GanhaLicita / PNCP - Contratação 062/2024</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/preparativos-de-pascoa-em-igarassu-tem-empreendedorismo-e-programacao-cultural/">Prefeitura Municipal de Igarassu - Preparativos de Páscoa em Igarassu</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://bnccompras.com/DirectBuy/DirectBuyView?param1=%5Bgkz%5D5%2FbPCFvm66jhYEIARaG5jfhCouDP3cMzCMDj_V92YqutVZIERCb1lxkh13SARcxdHpOQp16MAVLlNNb9760QvvcBUK3pKMdYyaex7LBS1pY%3D">BNC Compras - Município de Igarassu 098/2025</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://conectaprofessores.com/wp-content/uploads/2025/04/publicado_107824_2025-04-16_63b2045566290bd3f8ab36cc4aeb783e.pdf">Diário Oficial dos Municípios de Pernambuco - Paixão de Cristo 2025</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://www.folhape.com.br/noticias/paixao-de-cristo-de-igarassu-movimenta-a-cidade-com-tradicao/404724/">Folha de Pernambuco - Paixão de Cristo de Igarassu movimenta a cidade</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/em-igarassu-paixao-de-cristo-leva-emocao-e-interatividade-com-o-publico/">Prefeitura Municipal de Igarassu - Paixão de Cristo leva emoção e interatividade</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/paixao-de-cristo-movimentou-economia-criativa-de-igarassu/">Prefeitura Municipal de Igarassu - Economia criativa de Igarassu</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/maior-espetaculo-de-pascoa-do-litoral-norte-acontece-em-igarassu/">Prefeitura Municipal de Igarassu - Maior espetáculo de Páscoa do Litoral Norte</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/wp-content/uploads/2026/03/CONVOCACAO-5-SUPLENTES-EDITAL-002-PNAB-2024.pdf">Prefeitura Municipal de Igarassu - Portaria 012 - PNAB</a></li>
-                        <li><a target="_blank" rel="noopener" href="https://www.azerutan.ki6.com.br/">Site próprio / Associação Cultural Azerutan</a></li>
+                        <li><a target="_blank" rel="noopener" href="https://www.diariodepernambuco.com.br/noticia/vidaurbana/2018/03/paixao-de-cristo-em-igarassu-completa-33-anos.html">Diário de Pernambuco - Paixão de Cristo em Igarassu completa 33 anos</a><small class="source-url">https://www.diariodepernambuco.com.br/noticia/vidaurbana/2018/03/paixao-de-cristo-em-igarassu-completa-33-anos.html</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/paixao-de-cristo-em-igarassu-completa-33-anos/">Prefeitura Municipal de Igarassu - Paixão de Cristo em Igarassu completa 33 anos</a><small class="source-url">https://igarassu.pe.gov.br/paixao-de-cristo-em-igarassu-completa-33-anos/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/igarassu-renova-a-tradicao-da-semana-santa-com-a-realizacao-da-paixao-de-cristo/">Prefeitura Municipal de Igarassu - Igarassu renova a tradição da Semana Santa</a><small class="source-url">https://igarassu.pe.gov.br/igarassu-renova-a-tradicao-da-semana-santa-com-a-realizacao-da-paixao-de-cristo/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/wp-content/uploads/2020/12/Munici%CC%81pio-de-Igarassu-dia%CC%81rio-oficial.pdf">Diário Oficial / Prefeitura de Igarassu - Resultado preliminar - Lei Aldir Blanc</a><small class="source-url">https://igarassu.pe.gov.br/wp-content/uploads/2020/12/Munici%CC%81pio-de-Igarassu-dia%CC%81rio-oficial.pdf</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://www.cultura.pe.gov.br/wp-content/uploads/2021/08/8-HABILITACAO-POS-RECURSOS-ELEICOES-SETORIAIS-CEPC.pdf">Secult-PE / FUNDARPE - Eleições Setoriais do CEPC</a><small class="source-url">https://www.cultura.pe.gov.br/wp-content/uploads/2021/08/8-HABILITACAO-POS-RECURSOS-ELEICOES-SETORIAIS-CEPC.pdf</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://www-storage.voxtecnologia.com.br/?f=365&i=publicado_90162_2023-04-06_8033ac7059734509e9614249db1b1fbf.pdf&m=sigpub.publicacao">AMUPE - Inexigibilidade nº 028/2023</a><small class="source-url">https://www-storage.voxtecnologia.com.br/?f=365&i=publicado_90162_2023-04-06_8033ac7059734509e9614249db1b1fbf.pdf&m=sigpub.publicacao</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://transparencia.systemainformatica.com.br/entidade/igarassu/upload/20230827114025_INEXIGIBILIDADE_2023.pdf">Portal de Transparência / Prefeitura de Igarassu - Inexigibilidade 2023</a><small class="source-url">https://transparencia.systemainformatica.com.br/entidade/igarassu/upload/20230827114025_INEXIGIBILIDADE_2023.pdf</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=qcCKS19_lC4">YouTube - Canal Grupo Azerutan - A Paixão de Cristo de Igarassu - Ano 2019</a><small class="source-url">https://www.youtube.com/watch?v=qcCKS19_lC4</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/paixao-de-cristo-igarassu-tem-teatro-musical-interativo-e-diversidade/">Prefeitura Municipal de Igarassu - Teatro musical interativo e diversidade</a><small class="source-url">https://igarassu.pe.gov.br/paixao-de-cristo-igarassu-tem-teatro-musical-interativo-e-diversidade/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://bnccompras.com/DirectBuy/DirectBuyView?param1=%5Bgkz%5DJyiwCnllTuinRPwz3K2_bi5oZCi23z0UIdpL4S52Ev0i4R9hEFB7ZVSx7jcYbl4tiGDULY7w3ZXqcBtuydaADeHJ08pKX07fPQNWge1PBXg%3D">BNC Compras - Município de Igarassu 062/2024</a><small class="source-url">https://bnccompras.com/DirectBuy/DirectBuyView?param1=%5Bgkz%5DJyiwCnllTuinRPwz3K2_bi5oZCi23z0UIdpL4S52Ev0i4R9hEFB7ZVSx7jcYbl4tiGDULY7w3ZXqcBtuydaADeHJ08pKX07fPQNWge1PBXg%3D</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://ganhalicita.com.br/contratacoes/0486db51-46d7-4ee9-8a5f-7917e01fe052/">GanhaLicita / PNCP - Contratação 062/2024</a><small class="source-url">https://ganhalicita.com.br/contratacoes/0486db51-46d7-4ee9-8a5f-7917e01fe052/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/preparativos-de-pascoa-em-igarassu-tem-empreendedorismo-e-programacao-cultural/">Prefeitura Municipal de Igarassu - Preparativos de Páscoa em Igarassu</a><small class="source-url">https://igarassu.pe.gov.br/preparativos-de-pascoa-em-igarassu-tem-empreendedorismo-e-programacao-cultural/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://bnccompras.com/DirectBuy/DirectBuyView?param1=%5Bgkz%5D5%2FbPCFvm66jhYEIARaG5jfhCouDP3cMzCMDj_V92YqutVZIERCb1lxkh13SARcxdHpOQp16MAVLlNNb9760QvvcBUK3pKMdYyaex7LBS1pY%3D">BNC Compras - Município de Igarassu 098/2025</a><small class="source-url">https://bnccompras.com/DirectBuy/DirectBuyView?param1=%5Bgkz%5D5%2FbPCFvm66jhYEIARaG5jfhCouDP3cMzCMDj_V92YqutVZIERCb1lxkh13SARcxdHpOQp16MAVLlNNb9760QvvcBUK3pKMdYyaex7LBS1pY%3D</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://conectaprofessores.com/wp-content/uploads/2025/04/publicado_107824_2025-04-16_63b2045566290bd3f8ab36cc4aeb783e.pdf">Diário Oficial dos Municípios de Pernambuco - Paixão de Cristo 2025</a><small class="source-url">https://conectaprofessores.com/wp-content/uploads/2025/04/publicado_107824_2025-04-16_63b2045566290bd3f8ab36cc4aeb783e.pdf</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://www.folhape.com.br/noticias/paixao-de-cristo-de-igarassu-movimenta-a-cidade-com-tradicao/404724/">Folha de Pernambuco - Paixão de Cristo de Igarassu movimenta a cidade</a><small class="source-url">https://www.folhape.com.br/noticias/paixao-de-cristo-de-igarassu-movimenta-a-cidade-com-tradicao/404724/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/em-igarassu-paixao-de-cristo-leva-emocao-e-interatividade-com-o-publico/">Prefeitura Municipal de Igarassu - Paixão de Cristo leva emoção e interatividade</a><small class="source-url">https://igarassu.pe.gov.br/em-igarassu-paixao-de-cristo-leva-emocao-e-interatividade-com-o-publico/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/paixao-de-cristo-movimentou-economia-criativa-de-igarassu/">Prefeitura Municipal de Igarassu - Economia criativa de Igarassu</a><small class="source-url">https://igarassu.pe.gov.br/paixao-de-cristo-movimentou-economia-criativa-de-igarassu/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/maior-espetaculo-de-pascoa-do-litoral-norte-acontece-em-igarassu/">Prefeitura Municipal de Igarassu - Maior espetáculo de Páscoa do Litoral Norte</a><small class="source-url">https://igarassu.pe.gov.br/maior-espetaculo-de-pascoa-do-litoral-norte-acontece-em-igarassu/</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://igarassu.pe.gov.br/wp-content/uploads/2026/03/CONVOCACAO-5-SUPLENTES-EDITAL-002-PNAB-2024.pdf">Prefeitura Municipal de Igarassu - Portaria 012 - PNAB</a><small class="source-url">https://igarassu.pe.gov.br/wp-content/uploads/2026/03/CONVOCACAO-5-SUPLENTES-EDITAL-002-PNAB-2024.pdf</small></li>
+                        <li><a target="_blank" rel="noopener" href="https://www.azerutan.ki6.com.br/">Site próprio / Associação Cultural Azerutan</a><small class="source-url">https://www.azerutan.ki6.com.br/</small></li>
                     </ol>
                     <div class="notice-box mt-3">
                         Nota mantida do dossiê: esta organização documental de pesquisa pública não substitui parecer
@@ -1499,20 +1637,41 @@ Nota: este dossiê é uma organização documental de pesquisa pública; não su
 <script src="./template/bootstrap.min.js"></script>
 <script>
     (function () {
-        var hash = window.location.hash;
-        if (hash && hash.indexOf('dossie-pagina-') > -1) {
-            $('#aba-dossie-tab').tab('show');
-            setTimeout(function () {
-                var collapse = document.querySelector(hash + ' .collapse');
-                if (collapse) {
-                    $(collapse).collapse('show');
-                }
-                var target = document.querySelector(hash);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 250);
+        var tabButtons = document.querySelectorAll('[data-tab-target]');
+        var panels = document.querySelectorAll('.tab-panel');
+
+        function showTab(targetId) {
+            var showAll = targetId === 'aba-tudo';
+            panels.forEach(function (panel) {
+                panel.classList.toggle('is-active', showAll || panel.id === targetId);
+            });
+            tabButtons.forEach(function (button) {
+                button.classList.toggle('active', button.getAttribute('data-tab-target') === targetId);
+            });
+            var nav = document.getElementById('conteudo-documental');
+            if (nav) {
+                nav.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
+
+        tabButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                showTab(button.getAttribute('data-tab-target'));
+            });
+        });
+
+        document.querySelectorAll('.quick-index a[href^="#"]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                showTab('aba-dossie');
+                var target = document.querySelector(link.getAttribute('href'));
+                if (target) {
+                    event.preventDefault();
+                    setTimeout(function () {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
+                }
+            });
+        });
     })();
 </script>
 </body>
