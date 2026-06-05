@@ -39,11 +39,13 @@ if (isset($_POST['acao']) && $_POST['acao'] === "seExiste") {
     // pode vir URL (link_imagem_projeto...) ou path local (path_imagem_projeto...)
     $link = isset($_POST['link']) ? trim($_POST['link']) : '';
 
-    function is_url($str) {
+    function is_url($str)
+    {
         return (bool)preg_match('#^https?://#i', $str);
     }
 
-    function urlExiste200($url) {
+    function urlExiste200($url)
+    {
         $headers = @get_headers($url);
         if (!$headers || !isset($headers[0])) return false;
         return (strpos($headers[0], '200') !== false);
@@ -105,7 +107,7 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
     }
 
     // extensões aceitas como "documento" (mantém sua lógica)
-    $docExts = array('txt','pdf','doc','docx','xls','xlsx','ppt','pptx','xlms');
+    $docExts = array('txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'xlms');
     $ext = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
 
     // garante pasta do ano
@@ -125,7 +127,6 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
         $photoParaDb = arquivoPDF($foto, $baseDir, $path_imagem_projeto, $seed);
         // retorna path local (como você já fazia nesta branch)
         $link_arquivo_retorno = $path_imagem_projeto . $photoParaDb;
-
     } else {
 
         // imagem: mantém seu padrão (resize + thumbnail) e mantém DB com thumbnail
@@ -150,7 +151,7 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
         'RG'         => 7,
         'P'          => 5,
         'RESIDENCIA' => 6,
-        'HABILITACAO'=> 7,
+        'HABILITACAO' => 7,
         'CPF'        => 8,
     );
 
@@ -286,7 +287,7 @@ require_once 'header.php';
                 <div class="card-header">Lista de projetos</div>
                 <div class="card-body">
                     <p>Clique no botão a seguir para exibir a lista de todas as pessoas matriculadas para A Paixão de Cristo deste ano.</p>
-                    <a href="projeto.php?id=<?php echo $_GET['projeto'];?>" class="btn btn-success">Lista de Projetos</a>
+                    <a href="projeto.php?id=<?php echo $_GET['projeto']; ?>" class="btn btn-success">Lista de Projetos</a>
                 </div>
             </div>
         </div>
@@ -304,7 +305,9 @@ require_once 'header.php';
     </div>
 
     <div class="card mt-4">
-        <div class="card-header"><?php echo $Colaborador2['nome']; ?></div>
+        <div class="card-header">
+            <h3><?php echo strtoupper($Colaborador2['nome']); ?></h3>
+        </div>
         <div class="card-body">
             <form id="atualizarCad" enctype="multipart/form-data">
                 <input type="hidden" name="acao" value="atualizar" />
@@ -504,13 +507,12 @@ require_once 'header.php';
                         }
 
                         $fotoResize = str_replace('thumbnail', 'resize', $fotoOrig);
-                        $urlResize  = $path_imagem_projeto . ltrim($fotoResize, '/');
+                        $urlResize  = $link_imagem_projeto . ltrim($fotoResize, '/');
                         $urlOrig    = $path_imagem_projeto . ltrim($fotoOrig, '/');
-
                         $urlValida = file_exists($urlResize) ? $urlResize : (file_exists($urlOrig) ? $urlOrig : '');
 
                         if ($urlValida) {
-                            echo "<img src='" . htmlspecialchars($urlValida, ENT_QUOTES) . "' alt='Foto Perfil'>";
+                            echo "<img src='" . htmlspecialchars($urlResize, ENT_QUOTES) . "' alt='Foto Perfil'>";
                         } else {
                             echo "<img src='{$baseIcones}512652.png' alt='Erro'>";
                         }
@@ -745,4 +747,5 @@ require_once 'header.php';
     }
 </script>
 </body>
+
 </html>
