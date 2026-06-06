@@ -22,6 +22,11 @@ if (!$result) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#20b2aa" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Azerutan" />
     <title>Paixão de Cristo de Igarassu — Azerutan</title>
 
     <!-- Bootstrap -->
@@ -438,6 +443,33 @@ if (!$result) {
             margin-top: 20px;
         }
 
+        .pwa-install-button {
+            display: none;
+            position: fixed;
+            left: 50%;
+            bottom: calc(16px + env(safe-area-inset-bottom));
+            z-index: 1080;
+            transform: translateX(-50%);
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, .22);
+            font-weight: 700;
+            line-height: 1;
+            padding: .85rem 1.15rem;
+            white-space: nowrap;
+        }
+
+        .pwa-install-button:hover,
+        .pwa-install-button:focus {
+            background: var(--primary-700);
+            color: #fff;
+            outline: none;
+        }
+
         @media (max-width: 576px) {
             .card-grid {
                 grid-template-columns: 1fr;
@@ -445,6 +477,16 @@ if (!$result) {
 
             .btn:not(.table .btn) {
                 width: 100%;
+            }
+
+            .pwa-install-button.is-visible {
+                display: inline-flex;
+            }
+        }
+
+        @media (min-width: 577px), (display-mode: standalone) {
+            .pwa-install-button.is-visible {
+                display: none !important;
             }
         }
     </style>

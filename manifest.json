@@ -1,0 +1,32 @@
+{
+  "name": "Associa\u00e7\u00e3o Cultural Azerutan",
+  "short_name": "Azerutan",
+  "description": "Aplicativo da Associa\u00e7\u00e3o Cultural Azerutan.",
+  "lang": "pt-BR",
+  "start_url": "./index.php",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7f8",
+  "theme_color": "#20b2aa",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

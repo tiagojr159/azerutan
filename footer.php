@@ -12,3 +12,9 @@
 <footer class="container mt-32 mb-4 text-center" style="color:var(--muted)">
     © Azerutan 2017–<?php echo date('Y'); ?>
 </footer>
+
+<button type="button" id="pwaInstallButton" class="pwa-install-button" aria-label="Instalar Azerutan no celular">
+    Instalar no celular
+</button>
+
+<script src="./pwa-install.js"></script>
