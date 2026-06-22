@@ -40,6 +40,187 @@ require_once 'header.php';
     <script src="js/autocompletar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <style>
+        .project-carousel {
+            max-width: 720px;
+            margin: 0 auto 12px;
+            border-radius: 18px;
+            background: #f5f7f2;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, .08);
+            padding: 14px;
+            position: relative;
+        }
+
+        .project-carousel-viewport {
+            overflow: hidden;
+            border-radius: 14px;
+        }
+
+        .project-carousel-track {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .project-carousel-track.is-sliding-next {
+            animation: projectCarouselNext .45s ease;
+        }
+
+        .project-carousel-track.is-sliding-prev {
+            animation: projectCarouselPrev .45s ease;
+        }
+
+        .project-carousel-frame {
+            border: 0;
+            padding: 0;
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #dfe7db;
+            cursor: pointer;
+        }
+
+        .project-carousel-frame img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .project-carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .58);
+            color: #fff;
+            font-size: 28px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .project-carousel-nav.prev {
+            left: 18px;
+        }
+
+        .project-carousel-nav.next {
+            right: 18px;
+        }
+
+        .project-tabs {
+            border-bottom: 0;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        .project-tabs .nav-link {
+            border: 0;
+            border-radius: 999px;
+            background: #e7efe3;
+            color: #35513a;
+            font-weight: 700;
+            padding: 10px 18px;
+        }
+
+        .project-tabs .nav-link.active {
+            background: #198754;
+            color: #fff;
+        }
+
+        .project-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .project-gallery-item {
+            border: 0;
+            padding: 0;
+            background: transparent;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+        }
+
+        .project-gallery-item img {
+            width: 100%;
+            height: 210px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .project-gallery-empty {
+            text-align: center;
+            color: #6c757d;
+            padding: 24px 0;
+        }
+
+        .project-photo-modal .modal-content {
+            border: 0;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .project-photo-modal .modal-body {
+            padding: 0;
+            background: #111;
+        }
+
+        .project-photo-modal img {
+            width: 100%;
+            max-height: 78vh;
+            object-fit: contain;
+            display: block;
+            background: #111;
+        }
+
+        @keyframes projectCarouselNext {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-70px);
+            }
+        }
+
+        @keyframes projectCarouselPrev {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(70px);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .project-carousel-track {
+                grid-template-columns: 1fr;
+            }
+
+            .project-gallery-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .project-carousel-track {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .project-gallery-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
 
 </head>
 
@@ -75,6 +256,26 @@ require_once 'header.php';
         die("Projeto não encontrado.");
     }
 
+    $fotosProjeto = [];
+    $tipoProjetoFotos = 'pj=' . (int)$projeto['id'];
+    if ($stmtFotosProjeto = mysqli_prepare($conn, "SELECT foto FROM foto_colaborador WHERE tipo = ? ORDER BY id DESC LIMIT 20")) {
+        mysqli_stmt_bind_param($stmtFotosProjeto, 's', $tipoProjetoFotos);
+        mysqli_stmt_execute($stmtFotosProjeto);
+        $resultFotosProjeto = mysqli_stmt_get_result($stmtFotosProjeto);
+        while ($rowFotoProjeto = mysqli_fetch_assoc($resultFotosProjeto)) {
+            $fotoRelativa = trim((string)($rowFotoProjeto['foto'] ?? ''));
+            if ($fotoRelativa === '') {
+                continue;
+            }
+
+            $fotosProjeto[] = [
+                'thumb' => $link_imagem_projeto . ltrim($fotoRelativa, '/'),
+                'full' => $link_imagem_projeto . ltrim(str_replace('thumbnail', 'resize', $fotoRelativa), '/'),
+            ];
+        }
+        mysqli_stmt_close($stmtFotosProjeto);
+    }
+
     $INSCRICOES_ABERTAS = !empty($projeto['inscricoes_abertas']) ? (int)$projeto['inscricoes_abertas'] : 0;
 
     // ===========================
@@ -94,11 +295,58 @@ require_once 'header.php';
 
     <div class="container mt-5 pt-4">
         <div class="card-az p-4">
-            <div class="text-center mb-4">
-                <img width="50%"
-                    src="<?= $link_imagem_projeto; ?>../<?= $projeto['link_img']; ?>" />
-                <h2 class="mt-2"><?= htmlspecialchars($projeto['nome']); ?></h2>
-                <span class="proj-cat"><?= htmlspecialchars($projeto['categoria']); ?></span>
+            <ul class="nav nav-tabs project-tabs" id="projectTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-detalhes" data-bs-toggle="tab" data-bs-target="#pane-detalhes" type="button" role="tab" aria-controls="pane-detalhes" aria-selected="true">Detalhes</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-fotos" data-bs-toggle="tab" data-bs-target="#pane-fotos" type="button" role="tab" aria-controls="pane-fotos" aria-selected="false">Mais fotos</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="pane-detalhes" role="tabpanel" aria-labelledby="tab-detalhes" tabindex="0">
+                    <div class="text-center mb-4">
+                        <h2 class="mt-2"><?= htmlspecialchars($projeto['nome']); ?></h2>
+                        <p ><?= htmlspecialchars($projeto['categoria']); ?></p>
+                        
+                        <img width="50%"
+                            src="<?= $link_imagem_projeto; ?>../<?= $projeto['link_img']; ?>" />
+                <?php if (!empty($fotosProjeto)) : ?>
+                    <div id="carouselProjetoFotos" class="project-carousel"
+                        data-fotos='<?= htmlspecialchars(json_encode($fotosProjeto, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), ENT_QUOTES, "UTF-8"); ?>'>
+                        <button type="button" class="project-carousel-nav prev" data-action="prev" aria-label="Voltar fotos">&#8249;</button>
+                        <div class="project-carousel-viewport">
+                            <div class="project-carousel-track">
+                                <button type="button" class="project-carousel-frame js-open-photo-modal"><img data-slot="0" src="" alt="Foto do projeto 1"></button>
+                                <button type="button" class="project-carousel-frame js-open-photo-modal"><img data-slot="1" src="" alt="Foto do projeto 2"></button>
+                                <button type="button" class="project-carousel-frame js-open-photo-modal"><img data-slot="2" src="" alt="Foto do projeto 3"></button>
+                            </div>
+                        </div>
+                        <button type="button" class="project-carousel-nav next" data-action="next" aria-label="Avançar fotos">&#8250;</button>
+                    </div>
+                <?php endif; ?>
+                    </div>
+
+                </div>
+                <div class="tab-pane fade" id="pane-fotos" role="tabpanel" aria-labelledby="tab-fotos" tabindex="0">
+                    <?php if (!empty($fotosProjeto)) : ?>
+                        <div class="project-gallery-grid mt-3">
+                            <?php foreach ($fotosProjeto as $index => $fotoProjeto) : ?>
+                                <button type="button"
+                                    class="project-gallery-item js-open-photo-modal"
+                                    data-full="<?= htmlspecialchars($fotoProjeto['full'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-thumb="<?= htmlspecialchars($fotoProjeto['thumb'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-index="<?= $index + 1; ?>">
+                                    <img src="<?= htmlspecialchars($fotoProjeto['thumb'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        alt="Foto do projeto <?= $index + 1; ?>"
+                                        onerror="this.onerror=null;this.src='<?= htmlspecialchars($fotoProjeto['full'], ENT_QUOTES, 'UTF-8'); ?>';" />
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
+                        <div class="project-gallery-empty">Este projeto ainda nÃ£o tem fotos adicionais.</div>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <p><strong>Ano do projeto:</strong> <?= htmlspecialchars($projeto['anoprojeto']); ?></p>
@@ -172,6 +420,24 @@ require_once 'header.php';
 
 
 
+
+    <div class="modal fade project-photo-modal" id="projectPhotoModal" tabindex="-1" aria-labelledby="projectPhotoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="projectPhotoModalLabel">Foto do projeto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <img id="projectPhotoModalImage" src="" alt="Foto ampliada do projeto">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-success" id="btnMaisFotosModal">Mais fotos</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="modalCertificado" tabindex="-1" aria-labelledby="modalCertificadoLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
@@ -893,6 +1159,178 @@ require_once 'header.php';
                 // chama 1 vez
                 $(function() {
                     setupModalRenovacao();
+                });
+            </script>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const carousel = document.getElementById('carouselProjetoFotos');
+                    if (!carousel) {
+                        return;
+                    }
+
+                    let fotos = [];
+                    try {
+                        fotos = JSON.parse(carousel.getAttribute('data-fotos') || '[]');
+                    } catch (e) {
+                        fotos = [];
+                    }
+
+                    const slots = Array.from(carousel.querySelectorAll('[data-slot]'));
+                    const modalElement = document.getElementById('projectPhotoModal');
+                    const modalImage = document.getElementById('projectPhotoModalImage');
+                    const btnMaisFotosModal = document.getElementById('btnMaisFotosModal');
+                    const track = carousel.querySelector('.project-carousel-track');
+                    const btnPrev = carousel.querySelector('[data-action="prev"]');
+                    const btnNext = carousel.querySelector('[data-action="next"]');
+                    if (!slots.length || !fotos.length || !track) {
+                        return;
+                    }
+
+                    const visibleCount = Math.min(3, fotos.length);
+                    const maxStart = Math.max(0, fotos.length - visibleCount);
+                    let startIndex = 0;
+                    let timerId = null;
+                    let isAnimating = false;
+
+                    function renderWindow() {
+                        slots.forEach(function(slot, slotIndex) {
+                            if (slotIndex < visibleCount) {
+                                const foto = fotos[startIndex + slotIndex];
+                                slot.src = foto.full;
+                                slot.alt = 'Foto do projeto ' + (startIndex + slotIndex + 1);
+                                slot.dataset.fallback = foto.thumb;
+                                slot.style.display = 'block';
+                                if (slot.parentElement) {
+                                    slot.parentElement.dataset.full = foto.full;
+                                    slot.parentElement.dataset.thumb = foto.thumb;
+                                    slot.parentElement.dataset.index = startIndex + slotIndex + 1;
+                                }
+                            } else {
+                                slot.removeAttribute('src');
+                                slot.style.display = 'none';
+                            }
+                        });
+                    }
+
+                    function normalizeIndex(nextIndex) {
+                        if (nextIndex > maxStart) {
+                            return 0;
+                        }
+                        if (nextIndex < 0) {
+                            return maxStart;
+                        }
+                        return nextIndex;
+                    }
+
+                    function finishAnimation(nextIndex, className) {
+                        startIndex = normalizeIndex(nextIndex);
+                        renderWindow();
+                        track.classList.remove(className);
+                        isAnimating = false;
+                    }
+
+                    function advance(step) {
+                        if (isAnimating) {
+                            return;
+                        }
+
+                        const nextIndex = normalizeIndex(startIndex + step);
+                        if (nextIndex === startIndex) {
+                            return;
+                        }
+
+                        const className = step > 0 ? 'is-sliding-next' : 'is-sliding-prev';
+                        isAnimating = true;
+                        track.classList.remove('is-sliding-next', 'is-sliding-prev');
+                        void track.offsetWidth;
+                        track.classList.add(className);
+
+                        window.setTimeout(function() {
+                            finishAnimation(nextIndex, className);
+                        }, 450);
+                    }
+
+                    function startAuto() {
+                        if (timerId) {
+                            window.clearInterval(timerId);
+                        }
+                        if (fotos.length <= visibleCount) {
+                            return;
+                        }
+                        timerId = window.setInterval(function() {
+                            advance(1);
+                        }, 2500);
+                    }
+
+                    slots.forEach(function(slot) {
+                        slot.addEventListener('error', function() {
+                            const fallback = this.dataset.fallback || '';
+                            if (fallback && this.src !== fallback) {
+                                this.src = fallback;
+                            }
+                        });
+                    });
+
+                    const photoModal = modalElement ? new bootstrap.Modal(modalElement) : null;
+
+                    function openPhotoModal(trigger) {
+                        if (!photoModal || !modalImage || !trigger) {
+                            return;
+                        }
+                        modalImage.src = trigger.getAttribute('data-full') || trigger.getAttribute('data-thumb') || '';
+                        modalImage.onerror = function() {
+                            const fallback = trigger.getAttribute('data-thumb') || '';
+                            if (fallback && this.src !== fallback) {
+                                this.src = fallback;
+                            }
+                        };
+                        photoModal.show();
+                    }
+
+                    document.querySelectorAll('.js-open-photo-modal').forEach(function(button) {
+                        button.addEventListener('click', function() {
+                            openPhotoModal(this);
+                        });
+                    });
+
+                    if (btnMaisFotosModal) {
+                        btnMaisFotosModal.addEventListener('click', function() {
+                            if (photoModal) {
+                                photoModal.hide();
+                            }
+                            const tabFotosButton = document.getElementById('tab-fotos');
+                            const paneFotos = document.getElementById('pane-fotos');
+                            if (tabFotosButton) {
+                                bootstrap.Tab.getOrCreateInstance(tabFotosButton).show();
+                            }
+                            if (paneFotos) {
+                                window.setTimeout(function() {
+                                    paneFotos.scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'start'
+                                    });
+                                }, 200);
+                            }
+                        });
+                    }
+
+                    if (btnPrev) {
+                        btnPrev.addEventListener('click', function() {
+                            advance(-1);
+                            startAuto();
+                        });
+                    }
+
+                    if (btnNext) {
+                        btnNext.addEventListener('click', function() {
+                            advance(1);
+                            startAuto();
+                        });
+                    }
+
+                    renderWindow();
+                    startAuto();
                 });
             </script>
 
