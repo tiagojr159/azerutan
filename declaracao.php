@@ -15,9 +15,19 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/config/conexao.class.php';
 require_once __DIR__ . '/config/crud.class.php';
 
-$composerAutoload = __DIR__ . '/vendor/autoload.php';
-if (file_exists($composerAutoload)) {
-    require_once $composerAutoload;
+$autoloadCandidates = [
+    __DIR__ . '/vendor/autoload.php',
+    dirname(__DIR__) . '/paixaodecristo/vendor/autoload.php',
+    dirname(__DIR__) . '/paixaodecristo/projeto/vendor/autoload.php',
+    dirname(__DIR__) . '/paixaodecristodeigarassu.ki6.com.br/vendor/autoload.php',
+    dirname(__DIR__) . '/paixaodecristodeigarassu.ki6.com.br/projeto/vendor/autoload.php',
+];
+
+foreach ($autoloadCandidates as $composerAutoload) {
+    if (file_exists($composerAutoload)) {
+        require_once $composerAutoload;
+        break;
+    }
 }
 
 if (!class_exists('\Dompdf\Dompdf')) {
@@ -494,11 +504,19 @@ if (!class_exists('\Dompdf\Dompdf')) {
     http_abort(500, 'Biblioteca Dompdf nao encontrada no servidor. Publique a pasta vendor ou rode o Composer em producao.');
 }
 
-$options = new Options();
-$options->set('isRemoteEnabled', true);
-$options->set('isHtml5ParserEnabled', true);
+if (class_exists('\Dompdf\Options')) {
+    $options = new Options();
+    $options->set('isRemoteEnabled', true);
+    $options->set('isHtml5ParserEnabled', true);
+    $dompdf = new Dompdf($options);
+} else {
+    $dompdf = new Dompdf();
+    if (method_exists($dompdf, 'set_option')) {
+        $dompdf->set_option('isRemoteEnabled', true);
+        $dompdf->set_option('isHtml5ParserEnabled', true);
+    }
+}
 
-$dompdf = new Dompdf($options);
 $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
