@@ -16,8 +16,25 @@ date_default_timezone_set('America/Sao_Paulo');
 require_once __DIR__ . '/config/conexao.class.php';
 require_once __DIR__ . '/config/crud.class.php';
 
-// Dompdf (ajuste o caminho do autoload conforme seu projeto)
-require_once __DIR__ . '/vendor/autoload.php';
+// Dompdf: tenta Composer primeiro e faz fallback para estruturas antigas.
+$composerAutoload = __DIR__ . '/vendor/autoload.php';
+if (file_exists($composerAutoload)) {
+    require_once $composerAutoload;
+}
+
+if (!class_exists('\Dompdf\Dompdf')) {
+    $legacyAutoloads = [
+        __DIR__ . '/vendor/dompdf/dompdf/autoload.inc.php',
+        __DIR__ . '/dompdf/autoload.inc.php',
+    ];
+
+    foreach ($legacyAutoloads as $legacyAutoload) {
+        if (file_exists($legacyAutoload)) {
+            require_once $legacyAutoload;
+            break;
+        }
+    }
+}
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -44,6 +61,35 @@ function data_br($dateStr)
     $ts = strtotime($dateStr);
     if ($ts === false) return '';
     return date('d/m/Y', $ts);
+}
+
+function data_extenso_pt_br($dateStr = 'now')
+{
+    $timestamp = is_numeric($dateStr) ? (int)$dateStr : strtotime((string)$dateStr);
+    if ($timestamp === false) {
+        $timestamp = time();
+    }
+
+    static $meses = [
+        1 => 'janeiro',
+        2 => 'fevereiro',
+        3 => 'marco',
+        4 => 'abril',
+        5 => 'maio',
+        6 => 'junho',
+        7 => 'julho',
+        8 => 'agosto',
+        9 => 'setembro',
+        10 => 'outubro',
+        11 => 'novembro',
+        12 => 'dezembro',
+    ];
+
+    $dia = date('d', $timestamp);
+    $mes = $meses[(int) date('n', $timestamp)] ?? date('m', $timestamp);
+    $ano = date('Y', $timestamp);
+
+    return $dia . ' de ' . $mes . ' de ' . $ano;
 }
 
 /* ---------- Função para gerar QR Code com biblioteca PHP ---------- */
@@ -221,7 +267,7 @@ $categoria   = $dados['categoria_proj'] ?? '';
 $anoProj     = $dados['ano_proj'] ?? date('Y');
 $papel       = !empty($dados['papel']) ? mb_strtoupper($dados['papel'], 'UTF-8') : '';
 $nascBR      = data_br($dados['nascimento_colab'] ?? null);
-$dataHojeBR  = strftime('%d de %B de %Y');
+$dataHojeBR  = data_extenso_pt_br();
 
 // Caminho do plano de fundo
 $bgPath = __DIR__ . '/backup/certificado.png';
@@ -362,6 +408,10 @@ $html = <<<HTML
 HTML;
 
 /* ---------- Renderiza PDF (paisagem) ---------- */
+
+if (!class_exists('\Dompdf\Dompdf')) {
+    http_abort(500, 'Biblioteca Dompdf nao encontrada no servidor. Publique a pasta vendor ou rode o Composer em producao.');
+}
 
 $options = new Options();
 $options->set('isRemoteEnabled', true);

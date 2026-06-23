@@ -449,9 +449,10 @@ require_once 'header.php';
                 <div class="modal-body">
                     <input type="hidden" id="idColabCert" name="id_colaborador">
                     <input type="hidden" id="idProjCert" name="id_projeto">
+                    <input type="hidden" id="docDestino" name="doc_destino" value="certificado.php">
                     <label for="nascimento" class="form-label">Data de nascimento</label>
                     <input type="date" class="form-control" id="nascimento" name="nascimento" required>
-                    <small class="text-muted">Informe sua data para liberar o certificado.</small>
+                    <small class="text-muted" id="textoLiberacaoDocumento">Informe sua data para liberar o certificado.</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -815,8 +816,20 @@ require_once 'header.php';
                         $retorno .= "<button type='button' class='btn btn-info btn-sm btn-certificado'
   data-idcol='" . $campo['id'] . "'
   data-idproj='" . (int)$id_projeto . "'
+  data-destino='certificado.php'
+  data-titulo='Confirmar data de nascimento'
+  data-texto='Informe sua data para liberar o certificado.'
   data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
   data-bs-toggle='modal' data-bs-target='#modalCertificado'>Certificado</button>";
+
+                        $retorno .= " <button type='button' class='btn btn-outline-info btn-sm btn-certificado'
+  data-idcol='" . $campo['id'] . "'
+  data-idproj='" . (int)$id_projeto . "'
+  data-destino='declaracao.php'
+  data-titulo='Confirmar data de nascimento'
+  data-texto='Informe sua data para liberar a declaração.'
+  data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
+  data-bs-toggle='modal' data-bs-target='#modalCertificado'>Declaração</button>";
                     }
 
                     $retorno .= "</td>";
@@ -1339,6 +1352,9 @@ require_once 'header.php';
                 $(document).on('click', '.btn-certificado', function() {
                     $('#idColabCert').val($(this).data('idcol'));
                     $('#idProjCert').val($(this).data('idproj'));
+                    $('#docDestino').val($(this).data('destino') || 'certificado.php');
+                    $('#modalCertificadoLabel').text($(this).data('titulo') || 'Confirmar data de nascimento');
+                    $('#textoLiberacaoDocumento').text($(this).data('texto') || 'Informe sua data para liberar o certificado.');
                     $('#nascimento').val('');
 
                     // Se precisar abrir programaticamente (além do data-bs-toggle):
@@ -1352,6 +1368,7 @@ require_once 'header.php';
 
                     const id_colaborador = $('#idColabCert').val();
                     const id_projeto = $('#idProjCert').val();
+                    const destino = $('#docDestino').val() || 'certificado.php';
                     const nascimento = $('#nascimento').val(); // YYYY-MM-DD
 
                     if (!nascimento) {
@@ -1369,9 +1386,10 @@ require_once 'header.php';
                     }).done(function(resp) {
                         if (resp.ok) {
                             // Pode incluir nascimento no GET para reforçar a checagem no PHP
-                            window.location.href = 'certificado.php?id_colaborador=' + encodeURIComponent(id_colaborador) +
+                            const url = destino + '?id_colaborador=' + encodeURIComponent(id_colaborador) +
                                 '&id_projeto=' + encodeURIComponent(id_projeto) +
                                 '&nascimento=' + encodeURIComponent($('#nascimento').val());
+                            window.open(url, '_blank');
                         } else {
                             alert(resp.msg || 'Data de nascimento não confere.');
                         }
