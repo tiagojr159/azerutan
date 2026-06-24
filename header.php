@@ -346,7 +346,7 @@ if (!$result) {
                 visibility: visible !important;
                 opacity: 1 !important;
                 position: relative !important;
-                z-index: 9999 !important;
+                z-index: auto !important;
             }
             
             /* Ajustes para dropdown do menu */

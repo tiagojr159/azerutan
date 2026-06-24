@@ -135,6 +135,17 @@ require_once 'header.php';
             color: #fff;
         }
 
+        .project-cover-image {
+            width: min(100%, 720px);
+            max-width: 78%;
+            height: auto;
+            display: block;
+            margin: 0 auto 18px;
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, .12);
+            object-fit: cover;
+        }
+
         .project-gallery-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -170,6 +181,20 @@ require_once 'header.php';
             overflow: hidden;
         }
 
+        .modal {
+            z-index: 2000 !important;
+        }
+
+        .modal-backdrop {
+            z-index: 1990 !important;
+        }
+
+        #modalCertificado,
+        #modalCertificado .modal-dialog,
+        #modalCertificado .modal-content {
+            z-index: 2001 !important;
+        }
+
         .project-photo-modal .modal-body {
             padding: 0;
             background: #111;
@@ -181,6 +206,50 @@ require_once 'header.php';
             object-fit: contain;
             display: block;
             background: #111;
+        }
+
+        .birthdate-input-group {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .birthdate-input-group .form-control {
+            flex: 1 1 auto;
+            width: auto;
+            min-width: 0;
+        }
+
+        .birthdate-calendar-btn {
+            flex: 0 0 46px;
+            width: 46px;
+            min-width: 46px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0;
+        }
+
+        .birthdate-calendar-btn::before,
+        .birthdate-calendar-icon {
+            content: "\1F4C5";
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .birthdate-picker-native {
+            position: fixed;
+            left: -9999px;
+            top: -9999px;
+            opacity: 0;
+            pointer-events: none;
+            width: 1px;
+            height: 1px;
+            border: 0;
+            padding: 0;
+            margin: 0;
         }
 
         @keyframes projectCarouselNext {
@@ -202,8 +271,46 @@ require_once 'header.php';
         }
 
         @media (max-width: 767px) {
+            .project-cover-image {
+                max-width: 100%;
+                margin-bottom: 14px;
+            }
+
+            .project-carousel {
+                padding: 10px;
+                border-radius: 16px;
+            }
+
+            .project-carousel-viewport {
+                border-radius: 12px;
+            }
+
             .project-carousel-track {
                 grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .project-carousel-frame {
+                border-radius: 12px;
+            }
+
+            .project-carousel-frame img {
+                height: min(58vw, 260px);
+            }
+
+            .project-carousel-nav {
+                width: 38px;
+                height: 38px;
+                font-size: 24px;
+                background: rgba(0, 0, 0, .5);
+            }
+
+            .project-carousel-nav.prev {
+                left: 14px;
+            }
+
+            .project-carousel-nav.next {
+                right: 14px;
             }
 
             .project-gallery-grid {
@@ -309,8 +416,9 @@ require_once 'header.php';
                         <h2 class="mt-2"><?= htmlspecialchars($projeto['nome']); ?></h2>
                         <p ><?= htmlspecialchars($projeto['categoria']); ?></p>
                         
-                        <img width="50%"
-                            src="<?= $link_imagem_projeto; ?>../<?= $projeto['link_img']; ?>" />
+                        <img class="project-cover-image"
+                            src="<?= $link_imagem_projeto; ?>../<?= $projeto['link_img']; ?>"
+                            alt="<?= htmlspecialchars($projeto['nome']); ?>" />
                 <?php if (!empty($fotosProjeto)) : ?>
                     <div id="carouselProjetoFotos" class="project-carousel"
                         data-fotos='<?= htmlspecialchars(json_encode($fotosProjeto, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), ENT_QUOTES, "UTF-8"); ?>'>
@@ -450,8 +558,24 @@ require_once 'header.php';
                     <input type="hidden" id="idColabCert" name="id_colaborador">
                     <input type="hidden" id="idProjCert" name="id_projeto">
                     <input type="hidden" id="docDestino" name="doc_destino" value="certificado.php">
-                    <label for="nascimento" class="form-label">Data de nascimento</label>
-                    <input type="date" class="form-control" id="nascimento" name="nascimento" required>
+                    <input type="hidden" id="nascimento" name="nascimento" required>
+                    <input type="date" id="nascimentoPicker" class="birthdate-picker-native" tabindex="-1" aria-hidden="true">
+                    <label for="nascimentoDisplay" class="form-label">Data de nascimento</label>
+                    <div class="birthdate-input-group">
+                        <input type="text"
+                            class="form-control"
+                            id="nascimentoDisplay"
+                            inputmode="numeric"
+                            autocomplete="bday"
+                            placeholder="dd/mm/aaaa"
+                            maxlength="10"
+                            aria-describedby="textoLiberacaoDocumento"
+                            required>
+                        <button type="button"
+                            class="btn btn-outline-secondary birthdate-calendar-btn"
+                            id="btnNascimentoCalendar"
+                            aria-label="Abrir calendário">📅</button>
+                    </div>
                     <small class="text-muted" id="textoLiberacaoDocumento">Informe sua data para liberar o certificado.</small>
                 </div>
                 <div class="modal-footer">
@@ -1200,33 +1324,58 @@ require_once 'header.php';
                         return;
                     }
 
-                    const visibleCount = Math.min(3, fotos.length);
-                    const maxStart = Math.max(0, fotos.length - visibleCount);
                     let startIndex = 0;
                     let timerId = null;
                     let isAnimating = false;
 
+                    function getVisibleCount() {
+                        if (window.innerWidth < 768) {
+                            return 1;
+                        }
+                        if (window.innerWidth < 992) {
+                            return 2;
+                        }
+                        return 3;
+                    }
+
+                    function getMaxStart() {
+                        return Math.max(0, fotos.length - Math.min(getVisibleCount(), fotos.length));
+                    }
+
+                    function syncTrackColumns() {
+                        track.style.gridTemplateColumns = 'repeat(' + Math.min(getVisibleCount(), fotos.length) + ', minmax(0, 1fr))';
+                    }
+
                     function renderWindow() {
+                        const visibleCount = Math.min(getVisibleCount(), fotos.length);
+                        syncTrackColumns();
+
                         slots.forEach(function(slot, slotIndex) {
+                            const frame = slot.parentElement;
                             if (slotIndex < visibleCount) {
                                 const foto = fotos[startIndex + slotIndex];
                                 slot.src = foto.full;
                                 slot.alt = 'Foto do projeto ' + (startIndex + slotIndex + 1);
                                 slot.dataset.fallback = foto.thumb;
                                 slot.style.display = 'block';
-                                if (slot.parentElement) {
-                                    slot.parentElement.dataset.full = foto.full;
-                                    slot.parentElement.dataset.thumb = foto.thumb;
-                                    slot.parentElement.dataset.index = startIndex + slotIndex + 1;
+                                if (frame) {
+                                    frame.style.display = 'block';
+                                    frame.dataset.full = foto.full;
+                                    frame.dataset.thumb = foto.thumb;
+                                    frame.dataset.index = startIndex + slotIndex + 1;
                                 }
                             } else {
                                 slot.removeAttribute('src');
                                 slot.style.display = 'none';
+                                if (frame) {
+                                    frame.style.display = 'none';
+                                }
                             }
                         });
                     }
 
                     function normalizeIndex(nextIndex) {
+                        const maxStart = getMaxStart();
                         if (nextIndex > maxStart) {
                             return 0;
                         }
@@ -1265,6 +1414,7 @@ require_once 'header.php';
                     }
 
                     function startAuto() {
+                        const visibleCount = Math.min(getVisibleCount(), fotos.length);
                         if (timerId) {
                             window.clearInterval(timerId);
                         }
@@ -1342,6 +1492,12 @@ require_once 'header.php';
                         });
                     }
 
+                    window.addEventListener('resize', function() {
+                        startIndex = Math.min(startIndex, getMaxStart());
+                        renderWindow();
+                        startAuto();
+                    });
+
                     renderWindow();
                     startAuto();
                 });
@@ -1402,6 +1558,156 @@ require_once 'header.php';
 
             
             <!-- Realização -->
+            <script>
+                function formatBirthDateDigits(value) {
+                    const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
+                    if (digits.length <= 2) {
+                        return digits;
+                    }
+                    if (digits.length <= 4) {
+                        return digits.slice(0, 2) + '/' + digits.slice(2);
+                    }
+                    return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+                }
+
+                function isoToDisplayDate(isoValue) {
+                    const match = String(isoValue || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (!match) {
+                        return '';
+                    }
+                    return match[3] + '/' + match[2] + '/' + match[1];
+                }
+
+                function displayToIsoDate(displayValue) {
+                    const match = String(displayValue || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                    if (!match) {
+                        return '';
+                    }
+
+                    const day = Number(match[1]);
+                    const month = Number(match[2]);
+                    const year = Number(match[3]);
+                    const date = new Date(year, month - 1, day);
+
+                    if (
+                        Number.isNaN(date.getTime()) ||
+                        date.getFullYear() !== year ||
+                        date.getMonth() !== month - 1 ||
+                        date.getDate() !== day
+                    ) {
+                        return '';
+                    }
+
+                    return String(year).padStart(4, '0') + '-' +
+                        String(month).padStart(2, '0') + '-' +
+                        String(day).padStart(2, '0');
+                }
+
+                function downloadDocument(url) {
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = '';
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                }
+
+                (function setupBirthDateModal() {
+                    const modalElement = document.getElementById('modalCertificado');
+                    const displayInput = document.getElementById('nascimentoDisplay');
+                    const hiddenInput = document.getElementById('nascimento');
+                    const nativePicker = document.getElementById('nascimentoPicker');
+                    const calendarButton = document.getElementById('btnNascimentoCalendar');
+
+                    if (!modalElement || !displayInput || !hiddenInput || !nativePicker || !calendarButton) {
+                        return;
+                    }
+
+                    if (modalElement.parentElement !== document.body) {
+                        document.body.appendChild(modalElement);
+                    }
+
+                    function syncFromDisplay() {
+                        displayInput.value = formatBirthDateDigits(displayInput.value);
+                        const isoValue = displayToIsoDate(displayInput.value);
+                        hiddenInput.value = isoValue;
+                        nativePicker.value = isoValue;
+                        if (isoValue) {
+                            displayInput.classList.remove('border-danger');
+                        }
+                    }
+
+                    function resetBirthDateFields() {
+                        displayInput.value = '';
+                        hiddenInput.value = '';
+                        nativePicker.value = '';
+                        displayInput.classList.remove('border-danger');
+                    }
+
+                    displayInput.addEventListener('input', syncFromDisplay);
+                    displayInput.addEventListener('blur', syncFromDisplay);
+
+                    nativePicker.addEventListener('change', function() {
+                        hiddenInput.value = this.value || '';
+                        displayInput.value = isoToDisplayDate(this.value);
+                        if (this.value) {
+                            displayInput.classList.remove('border-danger');
+                        }
+                    });
+
+                    calendarButton.addEventListener('click', function() {
+                        if (typeof nativePicker.showPicker === 'function') {
+                            nativePicker.showPicker();
+                            return;
+                        }
+                        nativePicker.focus();
+                        nativePicker.click();
+                    });
+
+                    $(document).on('click', '.btn-certificado', function() {
+                        resetBirthDateFields();
+                    });
+
+                    $('#formCertificado').off('submit').on('submit', function(e) {
+                        e.preventDefault();
+
+                        const id_colaborador = $('#idColabCert').val();
+                        const id_projeto = $('#idProjCert').val();
+                        const destino = $('#docDestino').val() || 'certificado.php';
+                        const nascimentoConvertido = displayToIsoDate((displayInput.value || '').trim());
+
+                        hiddenInput.value = nascimentoConvertido;
+                        nativePicker.value = nascimentoConvertido;
+
+                        if (!nascimentoConvertido) {
+                            alert('Informe a data de nascimento.');
+                            displayInput.classList.add('border-danger');
+                            displayInput.focus();
+                            return;
+                        }
+
+                        $.getJSON('certificado.php', {
+                            action: 'confirmaNascimento',
+                            id_colaborador: id_colaborador,
+                            id_projeto: id_projeto,
+                            nascimento: nascimentoConvertido
+                        }).done(function(resp) {
+                            if (resp.ok) {
+                                const url = destino + '?id_colaborador=' + encodeURIComponent(id_colaborador) +
+                                    '&id_projeto=' + encodeURIComponent(id_projeto) +
+                                    '&nascimento=' + encodeURIComponent(nascimentoConvertido);
+                                downloadDocument(url);
+                            } else {
+                                displayInput.classList.add('border-danger');
+                                alert(resp.msg || 'Data de nascimento nÃ£o confere.');
+                            }
+                        }).fail(function() {
+                            alert('Falha ao validar a data. Tente novamente.');
+                        });
+                    });
+                })();
+            </script>
+
             <div class="container mt-32">
                 <div class="card-az">
                     <div class="card-body text-center">
