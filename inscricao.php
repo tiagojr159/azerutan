@@ -15,6 +15,25 @@ $con = new conexao();
 $con->connect();
 $conn = $con->connect();
 
+function coordenadaSqlOuNull($valor, $min, $max)
+{
+    if (!isset($valor) || $valor === '') {
+        return "NULL";
+    }
+
+    $valor = str_replace(',', '.', trim($valor));
+    if (!is_numeric($valor)) {
+        return "NULL";
+    }
+
+    $numero = (float)$valor;
+    if ($numero < $min || $numero > $max) {
+        return "NULL";
+    }
+
+    return "'" . $numero . "'";
+}
+
 $id_projeto = 0;
 if (!empty($_POST['projeto'])) {
     $id_projeto =  $_POST['projeto'];
@@ -45,12 +64,14 @@ if (isset($_POST['action']) && $_POST['action'] == 'cadastrar') {
     $responsavel = $_POST['responsavel'];
     $responsavelrg = $_POST['responsavelrg'];
     $responsavelcpf = $_POST['responsavelcpf'];
+    $latitude = coordenadaSqlOuNull($_POST['latitude'] ?? null, -90, 90);
+    $longitude = coordenadaSqlOuNull($_POST['longitude'] ?? null, -180, 180);
 
     try {
         $crud = new crud('colaborador');
         $crud->inserir(
-            "nome,idade,email,telefone,celular,serie,endereco,bairro,cidade,sexo,pai,mae,nascimento,cpf,rg,responsavel,responsavelrg,responsavelcpf,cep,raca",
-            "'$nome','$idade','$email','$telefone','$celular','$serie','$endereco','$bairro','$cidade','$sexo','$pai','$mae','$nascimento','$cpf','$rg','$responsavel','$responsavelrg','$responsavelcpf','$cep','$raca'"
+            "nome,idade,email,telefone,celular,serie,endereco,bairro,cidade,sexo,pai,mae,nascimento,cpf,rg,responsavel,responsavelrg,responsavelcpf,cep,raca,latitude,longitude",
+            "'$nome','$idade','$email','$telefone','$celular','$serie','$endereco','$bairro','$cidade','$sexo','$pai','$mae','$nascimento','$cpf','$rg','$responsavel','$responsavelrg','$responsavelcpf','$cep','$raca',$latitude,$longitude"
         );
     } catch (Exception $e) {
         http_response_code(400);
@@ -234,6 +255,8 @@ include_once 'header.php';
                 <form action="" method="post" id="inscricaoAtor" name="inscricaoAtor">
                     <input type="hidden" name="action" value="cadastrar" />
                     <input type="hidden" name="id_projeto" value="<?= $id_projeto ?>" />
+                    <input type="hidden" name="latitude" id="latitude" />
+                    <input type="hidden" name="longitude" id="longitude" />
 
                     <div class="row g-3" id="formColaborador">
 
@@ -540,10 +563,42 @@ include_once 'header.php';
             });
         });
 
-        function salvarCadastro() {
+        function preencherLocalizacaoFormulario(formId) {
+            return new Promise(function(resolve) {
+                if (!navigator.geolocation) {
+                    resolve();
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var form = document.getElementById(formId);
+                    if (form) {
+                        var latitude = form.querySelector('[name="latitude"]');
+                        var longitude = form.querySelector('[name="longitude"]');
+                        if (latitude) {
+                            latitude.value = position.coords.latitude;
+                        }
+                        if (longitude) {
+                            longitude.value = position.coords.longitude;
+                        }
+                    }
+                    resolve();
+                }, function() {
+                    resolve();
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 8000,
+                    maximumAge: 60000
+                });
+            });
+        }
+
+        async function salvarCadastro() {
             if (getAge() == false) {
                 return false;
             }
+
+            await preencherLocalizacaoFormulario('inscricaoAtor');
 
             var $inputs = $('#inscricaoAtor').find("input, date, select, button, textarea");
             var serializedData = $inputs.serializeArray();

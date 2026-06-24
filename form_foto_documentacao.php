@@ -21,6 +21,25 @@ error_reporting(0);
 $con = new conexao();
 $con->connect();
 
+function coordenadaSqlOuNull($valor, $min, $max)
+{
+    if (!isset($valor) || $valor === '') {
+        return "NULL";
+    }
+
+    $valor = str_replace(',', '.', trim($valor));
+    if (!is_numeric($valor)) {
+        return "NULL";
+    }
+
+    $numero = (float)$valor;
+    if ($numero < $min || $numero > $max) {
+        return "NULL";
+    }
+
+    return "'" . $numero . "'";
+}
+
 /**
  * [AJUSTE PEQUENO] normaliza ids (sem mudar regra de negócio)
  */
@@ -85,6 +104,8 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
     $ano            = date('Y');
     $tipo           = isset($_POST['tipo']) ? trim($_POST['tipo']) : '';
     $time           = time();
+    $latitude       = coordenadaSqlOuNull($_POST['latitude'] ?? null, -90, 90);
+    $longitude      = coordenadaSqlOuNull($_POST['longitude'] ?? null, -180, 180);
 
     // validações básicas (sem mudar regra de negócio)
     if ($id_colaborador <= 0 || $tipo === '' || !isset($_FILES['foto'])) {
@@ -144,7 +165,7 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
 
     // salva foto no BD (mesma tabela e campos)
     $crud = new crud('foto_colaborador');
-    $crud->inserir("id_colaborador,foto,tipo,tamanho", "'$id_colaborador','$photoParaDb','$tipo',350");
+    $crud->inserir("id_colaborador,foto,tipo,tamanho,latitude,longitude", "'$id_colaborador','$photoParaDb','$tipo',350,$latitude,$longitude");
 
     // mapeamento de tipo -> id_campo (mesma regra, só mais simples)
     $mapCampo = array(
@@ -440,6 +461,8 @@ require_once 'header.php';
                     </div>
                     <input type="hidden" name="acao" value="cadastrar" />
                     <input type="hidden" name="id" value="<?php echo $id_colaborador; ?>" />
+                    <input type="hidden" name="latitude" id="latitude" />
+                    <input type="hidden" name="longitude" id="longitude" />
                     <div class="form-group">
                         <span><b>Tipo do Documento:</b></span>
                         <select name="tipo" id="tipo" class="form-control" required>
@@ -605,6 +628,36 @@ require_once 'header.php';
 
     const tempoInicial = 15;
 
+    function preencherLocalizacaoFormulario(formId) {
+        return new Promise(function(resolve) {
+            if (!navigator.geolocation) {
+                resolve();
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var form = document.getElementById(formId);
+                if (form) {
+                    var latitude = form.querySelector('[name="latitude"]');
+                    var longitude = form.querySelector('[name="longitude"]');
+                    if (latitude) {
+                        latitude.value = position.coords.latitude;
+                    }
+                    if (longitude) {
+                        longitude.value = position.coords.longitude;
+                    }
+                }
+                resolve();
+            }, function() {
+                resolve();
+            }, {
+                enableHighAccuracy: true,
+                timeout: 8000,
+                maximumAge: 60000
+            });
+        });
+    }
+
     function falar(qrCodeMessage) {
         const msg = new SpeechSynthesisUtterance();
         msg.volume = 1;
@@ -629,6 +682,8 @@ require_once 'header.php';
             alert('Selecione o tipo do documento.');
             return false;
         }
+
+        await preencherLocalizacaoFormulario('formImagem');
 
         var formData = new FormData($('#formImagem')[0]);
         var file = formData.get('foto');

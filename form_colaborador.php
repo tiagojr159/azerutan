@@ -12,6 +12,25 @@ require_once 'config/crud.class.php';
 $con = new conexao();
 $con->connect();
 
+function coordenadaSqlOuNull($valor, $min, $max)
+{
+    if (!isset($valor) || $valor === '') {
+        return "NULL";
+    }
+
+    $valor = str_replace(',', '.', trim($valor));
+    if (!is_numeric($valor)) {
+        return "NULL";
+    }
+
+    $numero = (float)$valor;
+    if ($numero < $min || $numero > $max) {
+        return "NULL";
+    }
+
+    return "'" . $numero . "'";
+}
+
 if (isset($_POST['action']) && $_POST['action'] == 'cadastrar') {
     $anodata = date('Y');
     $nome = $_POST['nome'];
@@ -34,11 +53,13 @@ if (isset($_POST['action']) && $_POST['action'] == 'cadastrar') {
     $responsavel = $_POST['responsavel'];
     $responsavelrg = $_POST['responsavelrg'];
     $responsavelcpf = $_POST['responsavelcpf'];
+    $latitude = coordenadaSqlOuNull($_POST['latitude'] ?? null, -90, 90);
+    $longitude = coordenadaSqlOuNull($_POST['longitude'] ?? null, -180, 180);
 
     $crud = new crud('colaborador');
     $crud->inserir(
-        "nome,idade,email,telefone,celular,serie,endereco,bairro,cidade,sexo,pai,mae,nascimento,cpf,rg,responsavel,responsavelrg,responsavelcpf,cep,raca",
-        "'$nome','$idade','$email','$telefone','$celular','$serie','$endereco','$bairro','$cidade','$sexo','$pai','$mae','$nascimento','$cpf','$rg','$responsavel','$responsavelrg','$responsavelcpf','$cep','$raca'"
+        "nome,idade,email,telefone,celular,serie,endereco,bairro,cidade,sexo,pai,mae,nascimento,cpf,rg,responsavel,responsavelrg,responsavelcpf,cep,raca,latitude,longitude",
+        "'$nome','$idade','$email','$telefone','$celular','$serie','$endereco','$bairro','$cidade','$sexo','$pai','$mae','$nascimento','$cpf','$rg','$responsavel','$responsavelrg','$responsavelcpf','$cep','$raca',$latitude,$longitude"
     );
 
     $consulta_vagas = mysqli_query($con->connect(), "SELECT id FROM colaborador ORDER BY id DESC LIMIT 1");
@@ -212,6 +233,8 @@ if (isset($_POST['action']) && $_POST['action'] == 'cadastrar') {
             <div class="card-body form-section">
                 <form action="" method="post" id="inscricaoAtor" name="inscricaoAtor">
                     <input type="hidden" name="action" value="cadastrar" />
+                    <input type="hidden" name="latitude" id="latitude" />
+                    <input type="hidden" name="longitude" id="longitude" />
                     <div class="row g-3" id="formColaborador">
                         <div class="col-md-6">
                             <label class="form-label">Nome*</label>
@@ -435,10 +458,42 @@ if (isset($_POST['action']) && $_POST['action'] == 'cadastrar') {
             });
         });
 
-        function salvarCadastro() {
+        function preencherLocalizacaoFormulario(formId) {
+            return new Promise(function(resolve) {
+                if (!navigator.geolocation) {
+                    resolve();
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var form = document.getElementById(formId);
+                    if (form) {
+                        var latitude = form.querySelector('[name="latitude"]');
+                        var longitude = form.querySelector('[name="longitude"]');
+                        if (latitude) {
+                            latitude.value = position.coords.latitude;
+                        }
+                        if (longitude) {
+                            longitude.value = position.coords.longitude;
+                        }
+                    }
+                    resolve();
+                }, function() {
+                    resolve();
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 8000,
+                    maximumAge: 60000
+                });
+            });
+        }
+
+        async function salvarCadastro() {
             if (getAge() == false) {
                 return false;
             }
+            await preencherLocalizacaoFormulario('inscricaoAtor');
+
             var $form = $(this);
             var $inputs = $('#inscricaoAtor').find("input, date, select, button, textarea");
             var serializedData = $inputs.serializeArray();
