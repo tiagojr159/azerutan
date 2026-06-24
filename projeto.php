@@ -252,6 +252,52 @@ require_once 'header.php';
             margin: 0;
         }
 
+        .download-loading-indicator {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 2100;
+        }
+
+        .download-loading-indicator.is-visible {
+            display: flex;
+        }
+
+        .download-loading-card {
+            min-width: 180px;
+            padding: 18px 22px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, .05);
+            backdrop-filter: blur(6px);
+            text-align: center;
+            color: #fff;
+        }
+
+        .download-loading-spinner {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 10px;
+            border-radius: 999px;
+            border: 4px solid rgba(255, 255, 255, .22);
+            border-top-color: #198754;
+            animation: downloadLoadingSpin .9s linear infinite;
+        }
+
+        .download-loading-text {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+
+        @keyframes downloadLoadingSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         @keyframes projectCarouselNext {
             0% {
                 transform: translateX(0);
@@ -589,6 +635,13 @@ require_once 'header.php';
 
 
     <!-- (NOVO) Modal INSCRIÇÃO/RENOVAÇÃO – autocomplete + data de nascimento -->
+    <div id="downloadLoadingIndicator" class="download-loading-indicator" aria-hidden="true">
+        <div class="download-loading-card">
+            <div class="download-loading-spinner" aria-hidden="true"></div>
+            <div class="download-loading-text">Baixando...</div>
+        </div>
+    </div>
+
     <div class="modal fade" id="modalInscricao" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -1612,6 +1665,36 @@ require_once 'header.php';
                     link.remove();
                 }
 
+                let downloadLoadingTimerId = null;
+
+                function showDownloadLoadingIndicator() {
+                    const indicator = document.getElementById('downloadLoadingIndicator');
+                    if (!indicator) {
+                        return;
+                    }
+
+                    indicator.classList.add('is-visible');
+                    if (downloadLoadingTimerId) {
+                        window.clearTimeout(downloadLoadingTimerId);
+                    }
+                    downloadLoadingTimerId = window.setTimeout(function() {
+                        indicator.classList.remove('is-visible');
+                        downloadLoadingTimerId = null;
+                    }, 5000);
+                }
+
+                function hideDownloadLoadingIndicator() {
+                    const indicator = document.getElementById('downloadLoadingIndicator');
+                    if (!indicator) {
+                        return;
+                    }
+                    if (downloadLoadingTimerId) {
+                        window.clearTimeout(downloadLoadingTimerId);
+                        downloadLoadingTimerId = null;
+                    }
+                    indicator.classList.remove('is-visible');
+                }
+
                 (function setupBirthDateModal() {
                     const modalElement = document.getElementById('modalCertificado');
                     const displayInput = document.getElementById('nascimentoDisplay');
@@ -1686,6 +1769,8 @@ require_once 'header.php';
                             return;
                         }
 
+                        showDownloadLoadingIndicator();
+
                         $.getJSON('certificado.php', {
                             action: 'confirmaNascimento',
                             id_colaborador: id_colaborador,
@@ -1698,10 +1783,12 @@ require_once 'header.php';
                                     '&nascimento=' + encodeURIComponent(nascimentoConvertido);
                                 downloadDocument(url);
                             } else {
+                                hideDownloadLoadingIndicator();
                                 displayInput.classList.add('border-danger');
                                 alert(resp.msg || 'Data de nascimento nÃ£o confere.');
                             }
                         }).fail(function() {
+                            hideDownloadLoadingIndicator();
                             alert('Falha ao validar a data. Tente novamente.');
                         });
                     });
