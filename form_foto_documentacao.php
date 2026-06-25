@@ -103,9 +103,16 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
     $id_colaborador = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     $ano            = date('Y');
     $tipo           = isset($_POST['tipo']) ? trim($_POST['tipo']) : '';
+    $descricao      = isset($_POST['descricao']) ? trim($_POST['descricao']) : '';
     $time           = time();
     $latitude       = coordenadaSqlOuNull($_POST['latitude'] ?? null, -90, 90);
     $longitude      = coordenadaSqlOuNull($_POST['longitude'] ?? null, -180, 180);
+
+    if ($tipo === 'RECONHECIMENTO FACIAL' && $descricao === '') {
+        $descricao = 'RECONHECIMENTO FACIAL';
+    }
+
+    $tipoParaSalvar = ($descricao === 'RECONHECIMENTO FACIAL') ? 'D' : $tipo;
 
     // validações básicas (sem mudar regra de negócio)
     if ($id_colaborador <= 0 || $tipo === '' || !isset($_FILES['foto'])) {
@@ -165,7 +172,11 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
 
     // salva foto no BD (mesma tabela e campos)
     $crud = new crud('foto_colaborador');
-    $crud->inserir("id_colaborador,foto,tipo,tamanho,latitude,longitude", "'$id_colaborador','$photoParaDb','$tipo',350,$latitude,$longitude");
+    $descricaoSql = ($descricao !== '') ? "'" . mysqli_real_escape_string($con->connect(), $descricao) . "'" : "NULL";
+    $crud->inserir(
+        "id_colaborador,foto,tipo,descricao,tamanho,latitude,longitude",
+        "'$id_colaborador','$photoParaDb','$tipoParaSalvar',$descricaoSql,350,$latitude,$longitude"
+    );
 
     // mapeamento de tipo -> id_campo (mesma regra, só mais simples)
     $mapCampo = array(
@@ -177,8 +188,9 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
         'CPF'         => 8,
     );
 
-    if (isset($mapCampo[$tipo])) {
-        $id_campo = (int)$mapCampo[$tipo];
+    $chavePendencia = ($descricao === 'RECONHECIMENTO FACIAL') ? 'RECONHECIMENTO FACIAL' : $tipo;
+    if (isset($mapCampo[$chavePendencia])) {
+        $id_campo = (int)$mapCampo[$chavePendencia];
         $date = date("Y-m-d H:i:s");
         $crudPend = new crud('pend_cad');
         $crudPend->atualizar("pendencia=0,data='$date'", "id_colaborador=$id_colaborador and id_campo = $id_campo");
@@ -1002,7 +1014,8 @@ require_once 'header.php';
         var formData = new FormData();
         formData.append('acao', 'cadastrar');
         formData.append('id', '<?php echo (int) $id_colaborador; ?>');
-        formData.append('tipo', 'RECONHECIMENTO FACIAL');
+        formData.append('tipo', 'D');
+        formData.append('descricao', 'RECONHECIMENTO FACIAL');
         formData.append('foto', facialState.capturedBlob, 'reconhecimento-facial.jpg');
 
         await preencherLocalizacaoFormulario(null, formData);
