@@ -169,11 +169,12 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
 
     // mapeamento de tipo -> id_campo (mesma regra, só mais simples)
     $mapCampo = array(
-        'RG'         => 7,
-        'P'          => 5,
-        'RESIDENCIA' => 6,
+        'RECONHECIMENTO FACIAL' => 9,
+        'RG'          => 7,
+        'P'           => 5,
+        'RESIDENCIA'  => 6,
         'HABILITACAO' => 7,
-        'CPF'        => 8,
+        'CPF'         => 8,
     );
 
     if (isset($mapCampo[$tipo])) {
@@ -214,7 +215,7 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
     }
     $date = date("Y-m-d H:i:s");
     $crud = new crud('pend_cad');
-    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo not in(5,6,7,8)");
+    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo not in(5,6,7,8,9)");
     $crud = new crud('colaborador');
     $crud->atualizar("celular='$celular', telefone='$telefone', raca='$raca', sexo='$sexo', comentario='$comentario'", "id='$id_colaborador'");
     die();
@@ -336,6 +337,7 @@ require_once 'header.php';
                 <?php
                 $botao = 0;
                 $arquivo = 0;
+                $reconhecimentoFacial = 0;
                 $pendenciaAzul = 0;
                 $consulta_atua_cad = mysqli_query($con->connect(), "select * from pend_cad where id_colaborador = '" . $id_colaborador . "'");
                 while ($atua_cad = mysqli_fetch_assoc($consulta_atua_cad)) {
@@ -431,6 +433,15 @@ require_once 'header.php';
                         </div>
                     <?php
                     }
+                    if ($id_campo == 9 && $pendencia == 1) {
+                        $reconhecimentoFacial = 1;
+                        $pendenciaAzul = 1;
+                    ?>
+                        <div class="form-group">
+                            <span class="status-pendente">Falta Foto para Reconhecimento Facial</span>
+                        </div>
+                    <?php
+                    }
                 }
                 if ($botao == 1) {
                     $arquivo = 0;
@@ -479,6 +490,39 @@ require_once 'header.php';
                     </div>
                     <button type="button" class="btn btn-primary" id="btnEnviar">Enviar</button>
                 </form>
+            <?php } ?>
+
+            <?php if ($reconhecimentoFacial == 1) { ?>
+                <div class="card mt-4">
+                    <div class="card-header">Reconhecimento Facial</div>
+                    <div class="card-body">
+                        <p><b>Centralize o rosto no guia. Quando ele estiver bem alinhado, a captura será liberada.</b></p>
+                        <div style="text-align:center;">
+                            <button type="button" class="btn btn-warning" id="btnAbrirCameraFace">Abrir Câmera para Foto Facial</button>
+                        </div>
+                        <div id="facialCameraBox" style="display:none; max-width:420px; margin:20px auto 0;">
+                            <div style="position:relative; background:#111; border-radius:16px; overflow:hidden;">
+                                <video id="facialVideo" autoplay playsinline muted style="width:100%; display:block; transform:scaleX(-1);"></video>
+                                <div style="position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center;">
+                                    <div id="facialGuide" style="width:62%; height:72%; border:4px solid rgba(255,255,255,.92); border-radius:48% 48% 45% 45%; box-shadow:0 0 0 9999px rgba(255,255,255,.8); transition:border-color .2s ease, box-shadow .2s ease;"></div>
+                                </div>
+                            </div>
+                            <p id="facialStatus" style="margin-top:10px; text-align:center; font-weight:bold;">Abrindo câmera...</p>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                                <button type="button" class="btn btn-success" id="btnCapturarFace" disabled>Capturar Rosto</button>
+                                <button type="button" class="btn btn-secondary" id="btnFecharCamera" style="display:none;">Fechar Câmera</button>
+                            </div>
+                            <canvas id="facialCanvas" style="display:none;"></canvas>
+                            <div id="facialPreviewBox" style="display:none; margin-top:15px; text-align:center;">
+                                <img id="facialPreview" alt="PrÃ©via da foto facial" style="max-width:220px; width:100%; border-radius:12px; border:1px solid #ddd;">
+                                <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                                    <button type="button" class="btn btn-primary" id="btnEnviarFace">Salvar Foto Facial</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btnRefazerFace">Tirar Outra</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             <?php } ?>
 
             <div class="image-gallery">
@@ -583,25 +627,137 @@ require_once 'header.php';
     <p>© Companhia 2017-<?php echo date('Y'); ?></p>
 </footer>
 
-<div class="modal" id="meuModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Carregando</h4>
+<!-- old loading modal removed
                 <button type="button" class="close" data-bs-dismiss="modal">×</button>
             </div>
             <div class="modal-body">
                 <center>
                     <img src="https://www.superiorlawncareusa.com/wp-content/uploads/2020/05/loading-gif-png-5.gif" width="120" alt="Carregando">
                     <p>Aguarde enquanto a foto está sendo carregada.</p>
-                    <div id="lbmeuarquivo"></div>
+                    <div id="lbmeuarquivoAntigo"></div>
                     <p>
-                    <div id="temporizador"></div>
+                    <div id="temporizadorAntigo"></div>
                     </p>
                 </center>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+-->
+
+<style>
+    .upload-modal .modal-content {
+        border: 0;
+        border-radius: 18px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
+        overflow: hidden;
+    }
+
+    .upload-modal .modal-header {
+        align-items: center;
+        border-bottom: 1px solid #eef1f4;
+        padding: 18px 22px;
+    }
+
+    .upload-modal .modal-title {
+        color: #173c37;
+        font-size: 1.35rem;
+        font-weight: 800;
+    }
+
+    .upload-modal .btn-close {
+        box-shadow: none;
+        opacity: .65;
+    }
+
+    .upload-modal .modal-body {
+        padding: 28px 24px 26px;
+        text-align: center;
+    }
+
+    .upload-spinner {
+        animation: uploadSpin 1s linear infinite;
+        border: 6px solid #e8efee;
+        border-top-color: #0f766e;
+        border-radius: 50%;
+        height: 78px;
+        margin: 0 auto 18px;
+        width: 78px;
+    }
+
+    .upload-message {
+        color: #24302f;
+        font-size: 1.05rem;
+        margin: 0 0 12px;
+    }
+
+    .upload-meta {
+        background: #f3f7f6;
+        border-radius: 12px;
+        color: #31504c;
+        display: inline-block;
+        font-weight: 700;
+        margin-bottom: 16px;
+        padding: 9px 14px;
+    }
+
+    .upload-timer {
+        color: #60706d;
+        font-size: .95rem;
+        margin-bottom: 14px;
+    }
+
+    .upload-progress {
+        background: #e4ecea;
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .upload-progress span {
+        animation: uploadProgress 1.25s ease-in-out infinite;
+        background: linear-gradient(90deg, #0f766e, #23a99b);
+        border-radius: inherit;
+        display: block;
+        height: 100%;
+        width: 45%;
+    }
+
+    @keyframes uploadSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes uploadProgress {
+        0% {
+            transform: translateX(-110%);
+        }
+
+        100% {
+            transform: translateX(230%);
+        }
+    }
+</style>
+
+<div class="modal fade upload-modal" id="meuModal" tabindex="-1" aria-labelledby="uploadModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="uploadModalTitle">Enviando foto</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-spinner" aria-hidden="true"></div>
+                <p class="upload-message">Aguarde enquanto a foto esta sendo carregada.</p>
+                <div class="upload-meta" id="lbmeuarquivo">Preparando arquivo...</div>
+                <div class="upload-timer" id="temporizador">Iniciando envio...</div>
+                <div class="upload-progress" aria-hidden="true"><span></span></div>
             </div>
         </div>
     </div>
@@ -627,8 +783,13 @@ require_once 'header.php';
     }
 
     const tempoInicial = 15;
+    const facialState = {
+        stream: null,
+        detectionTimer: null,
+        capturedBlob: null
+    };
 
-    function preencherLocalizacaoFormulario(formId) {
+    function preencherLocalizacaoFormulario(formId, formDataExtra) {
         return new Promise(function(resolve) {
             if (!navigator.geolocation) {
                 resolve();
@@ -636,7 +797,7 @@ require_once 'header.php';
             }
 
             navigator.geolocation.getCurrentPosition(function(position) {
-                var form = document.getElementById(formId);
+                var form = formId ? document.getElementById(formId) : null;
                 if (form) {
                     var latitude = form.querySelector('[name="latitude"]');
                     var longitude = form.querySelector('[name="longitude"]');
@@ -646,6 +807,10 @@ require_once 'header.php';
                     if (longitude) {
                         longitude.value = position.coords.longitude;
                     }
+                }
+                if (formDataExtra instanceof FormData) {
+                    formDataExtra.set('latitude', position.coords.latitude);
+                    formDataExtra.set('longitude', position.coords.longitude);
                 }
                 resolve();
             }, function() {
@@ -668,6 +833,180 @@ require_once 'header.php';
         voice.voiceURI = voice.name;
         msg.lang = voice.lang;
         speechSynthesis.speak(msg);
+    }
+
+    function atualizarStatusFacial(texto, alinhado, liberarCaptura) {
+        var status = document.getElementById('facialStatus');
+        var btnCapturar = document.getElementById('btnCapturarFace');
+        var guia = document.getElementById('facialGuide');
+        var podeCapturar = typeof liberarCaptura === 'boolean' ? liberarCaptura : alinhado;
+        if (status) {
+            status.textContent = texto;
+            status.style.color = alinhado ? '#198754' : '#b02a37';
+        }
+        if (btnCapturar) {
+            btnCapturar.disabled = !podeCapturar;
+        }
+        if (guia) {
+            guia.style.borderColor = alinhado ? '#22c55e' : 'rgba(255,255,255,.92)';
+            guia.style.boxShadow = alinhado ? '0 0 0 9999px rgba(255,255,255,.8), 0 0 24px rgba(34,197,94,.8)' : '0 0 0 9999px rgba(255,255,255,.8)';
+        }
+    }
+
+    async function iniciarCameraFacial() {
+        var cameraBox = document.getElementById('facialCameraBox');
+        var btnAbrir = document.getElementById('btnAbrirCameraFace');
+        var btnFechar = document.getElementById('btnFecharCamera');
+        var previewBox = document.getElementById('facialPreviewBox');
+        var video = document.getElementById('facialVideo');
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !video) {
+            alert('Este aparelho nao permite abrir a camera neste navegador.');
+            return;
+        }
+
+        try {
+            facialState.stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 720 },
+                    height: { ideal: 960 }
+                },
+                audio: false
+            });
+
+            video.srcObject = facialState.stream;
+            cameraBox.style.display = 'block';
+            previewBox.style.display = 'none';
+            btnAbrir.style.display = 'none';
+            btnFechar.style.display = 'inline-block';
+            facialState.capturedBlob = null;
+
+            if ('FaceDetector' in window) {
+                atualizarStatusFacial('Posicione o rosto dentro do guia.', false);
+                iniciarMonitorFacial();
+            } else {
+                atualizarStatusFacial('Camera pronta. Alinhe o rosto e capture manualmente.', false, true);
+            }
+        } catch (error) {
+            atualizarStatusFacial('Nao foi possivel abrir a camera.', false);
+            alert('Nao foi possivel abrir a camera.');
+        }
+    }
+
+    function pararCameraFacial() {
+        if (facialState.detectionTimer) {
+            clearInterval(facialState.detectionTimer);
+            facialState.detectionTimer = null;
+        }
+        if (facialState.stream) {
+            facialState.stream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            facialState.stream = null;
+        }
+        var video = document.getElementById('facialVideo');
+        if (video) {
+            video.srcObject = null;
+        }
+    }
+
+    function iniciarMonitorFacial() {
+        if (!('FaceDetector' in window)) {
+            return;
+        }
+        if (facialState.detectionTimer) {
+            clearInterval(facialState.detectionTimer);
+        }
+
+        const detector = new FaceDetector({
+            fastMode: true,
+            maxDetectedFaces: 1
+        });
+
+        facialState.detectionTimer = setInterval(async function() {
+            var video = document.getElementById('facialVideo');
+            if (!video || video.readyState < 2) {
+                return;
+            }
+
+            try {
+                var faces = await detector.detect(video);
+                if (!faces || faces.length !== 1) {
+                    atualizarStatusFacial('Deixe apenas um rosto visivel na camera.', false);
+                    return;
+                }
+
+                var box = faces[0].boundingBox;
+                var larguraVideo = video.videoWidth || video.clientWidth || 1;
+                var alturaVideo = video.videoHeight || video.clientHeight || 1;
+                var centroX = box.x + (box.width / 2);
+                var centroY = box.y + (box.height / 2);
+                var alinhadoHorizontal = Math.abs(centroX - (larguraVideo / 2)) <= (larguraVideo * 0.12);
+                var alinhadoVertical = Math.abs(centroY - (alturaVideo / 2)) <= (alturaVideo * 0.14);
+                var tamanhoOk = box.width >= (larguraVideo * 0.28) && box.width <= (larguraVideo * 0.68);
+
+                if (alinhadoHorizontal && alinhadoVertical && tamanhoOk) {
+                    atualizarStatusFacial('Rosto alinhado. Pode capturar.', true);
+                } else {
+                    atualizarStatusFacial('Ajuste o rosto ate ficar centralizado no guia.', false);
+                }
+            } catch (error) {
+                atualizarStatusFacial('Analise facial indisponivel. Pode capturar manualmente.', false, true);
+                clearInterval(facialState.detectionTimer);
+                facialState.detectionTimer = null;
+            }
+        }, 1000);
+    }
+
+    function capturarFotoFacial() {
+        var video = document.getElementById('facialVideo');
+        var canvas = document.getElementById('facialCanvas');
+        var preview = document.getElementById('facialPreview');
+        var previewBox = document.getElementById('facialPreviewBox');
+
+        if (!video || !canvas || !preview) {
+            return;
+        }
+
+        var largura = video.videoWidth || 720;
+        var altura = video.videoHeight || 960;
+        canvas.width = largura;
+        canvas.height = altura;
+
+        var ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.translate(largura, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, largura, altura);
+        ctx.restore();
+
+        canvas.toBlob(function(blob) {
+            if (!blob) {
+                alert('Nao foi possivel capturar a foto.');
+                return;
+            }
+            facialState.capturedBlob = blob;
+            preview.src = URL.createObjectURL(blob);
+            previewBox.style.display = 'block';
+            atualizarStatusFacial('Foto capturada. Revise e salve.', true);
+        }, 'image/jpeg', 0.92);
+    }
+
+    async function enviarFotoFacial() {
+        if (!facialState.capturedBlob) {
+            alert('Capture a foto antes de salvar.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('acao', 'cadastrar');
+        formData.append('id', '<?php echo (int) $id_colaborador; ?>');
+        formData.append('tipo', 'RECONHECIMENTO FACIAL');
+        formData.append('foto', facialState.capturedBlob, 'reconhecimento-facial.jpg');
+
+        await preencherLocalizacaoFormulario(null, formData);
+        uploadFotoFacial(formData);
     }
 
     /**
@@ -744,15 +1083,97 @@ require_once 'header.php';
             location.reload();
         }
 
-        if (existe == 'nok') {
+      /*  if (existe == 'nok') {
             // mantém sua regra de voz
             falar('A imagem não carregou por que a internet está ruim, se o problema continuar, envie o documento em outro telefone.');
+        }*/
+    }
+
+    async function uploadFotoFacial(formData) {
+        var file = formData.get('foto');
+        if (!file) {
+            alert('Capture a foto antes de salvar.');
+            return false;
         }
+
+        var meuarquivo = file.size / 1000000;
+        if (file.size > 5000000) {
+            alert('Selecione um arquivo de imagem ate 5MB. Seu arquivo tem ' + meuarquivo + 'MB');
+            return false;
+        }
+
+        abrirModal();
+        falar('Aguarde enquanto a foto esta sendo carregada');
+        document.getElementById('lbmeuarquivo').textContent = 'Meu arquivo tem ' + meuarquivo.toString().substring(0, 4) + 'MB';
+
+        let tempoRestante = tempoInicial;
+        const intervaloContador = setInterval(() => {
+            tempoRestante--;
+            const segundos = tempoRestante % 60;
+            document.getElementById('temporizador').textContent = segundos + ' segundos...';
+            if (tempoRestante <= 0) {
+                clearInterval(intervaloContador);
+            }
+        }, 1000);
+
+        const reloadTimeout = setTimeout(() => {
+            fecharModal();
+            location.reload();
+        }, 15000);
+
+        var link = await salvar5sec(formData);
+        if (!link || (typeof link === 'string' && link.trim() === '')) {
+            falar('Houve um problema ao enviar a foto facial. Se continuar, tente outro telefone.');
+            return false;
+        }
+
+        var existe = await existe5sec(link);
+        if (existe == 'ok') {
+            clearTimeout(reloadTimeout);
+            clearInterval(intervaloContador);
+            fecharModal();
+            pararCameraFacial();
+            location.reload();
+        }
+
+      /*  if (existe == 'nok') {
+            falar('A imagem nao carregou porque a internet esta ruim, se o problema continuar, envie o documento em outro telefone.');
+        }*/
     }
 
     $(document).ready(function() {
         $('#btnEnviar').on('click', async function() {
             startTimer();
+        });
+
+        $('#btnAbrirCameraFace').on('click', async function() {
+            iniciarCameraFacial();
+        });
+
+        $('#btnCapturarFace').on('click', function() {
+            capturarFotoFacial();
+        });
+
+        $('#btnEnviarFace').on('click', async function() {
+            enviarFotoFacial();
+        });
+
+        $('#btnRefazerFace').on('click', function() {
+            document.getElementById('facialPreviewBox').style.display = 'none';
+            facialState.capturedBlob = null;
+            if ('FaceDetector' in window) {
+                atualizarStatusFacial('Reposicione o rosto para uma nova captura.', false);
+            } else {
+                atualizarStatusFacial('Camera pronta. Capture novamente.', false, true);
+            }
+        });
+
+        $('#btnFecharCamera').on('click', function() {
+            pararCameraFacial();
+            document.getElementById('facialCameraBox').style.display = 'none';
+            document.getElementById('btnAbrirCameraFace').style.display = 'inline-block';
+            document.getElementById('facialPreviewBox').style.display = 'none';
+            facialState.capturedBlob = null;
         });
 
         $('#btnAtualizarDados').on('click', async function() {
@@ -794,12 +1215,31 @@ require_once 'header.php';
     }
 
     function abrirModal() {
+        document.getElementById('lbmeuarquivo').textContent = 'Preparando arquivo...';
+        document.getElementById('temporizador').textContent = 'Iniciando envio...';
+
+        var modalEl = document.getElementById('meuModal');
+        if (window.bootstrap && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            return;
+        }
+
         $('#meuModal').modal('show');
     }
 
     function fecharModal() {
+        var modalEl = document.getElementById('meuModal');
+        if (window.bootstrap && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            return;
+        }
+
         $('#meuModal').modal('hide');
     }
+
+    window.addEventListener('beforeunload', function() {
+        pararCameraFacial();
+    });
 </script>
 </body>
 
