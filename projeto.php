@@ -603,6 +603,7 @@ require_once 'header.php';
                 <div class="modal-body">
                     <input type="hidden" id="idColabCert" name="id_colaborador">
                     <input type="hidden" id="idProjCert" name="id_projeto">
+                    <input type="hidden" id="idReciboCert" name="id_recibo">
                     <input type="hidden" id="docDestino" name="doc_destino" value="certificado.php">
                     <input type="hidden" id="nascimento" name="nascimento" required>
                     <input type="date" id="nascimentoPicker" class="birthdate-picker-native" tabindex="-1" aria-hidden="true">
@@ -839,6 +840,8 @@ require_once 'header.php';
             c.*, 
             a.*, 
             a.cache AS cacheano,
+            COALESCE(rc.recibo_qtd, 0) AS recibo_qtd,
+            rc.recibo_ids,
             (SELECT COUNT(*) 
                FROM pend_cad pc 
               WHERE pc.id_colaborador = c.id 
@@ -846,6 +849,17 @@ require_once 'header.php';
             ) AS pendencia
         FROM colaborador c
         JOIN ano_projeto a ON c.id = a.id_colaborador
+        LEFT JOIN (
+            SELECT
+                id_colaborador,
+                id_projeto,
+                COUNT(*) AS recibo_qtd,
+                GROUP_CONCAT(id ORDER BY data ASC, id ASC SEPARATOR ',') AS recibo_ids
+            FROM caixa
+            WHERE id_colaborador IS NOT NULL
+              AND id_colaborador > 0
+            GROUP BY id_colaborador, id_projeto
+        ) rc ON rc.id_colaborador = c.id AND rc.id_projeto = a.id_projeto
         WHERE a.id_projeto = '$id_projeto'";
 
                 if ($situacao == 'PENDENTE') {
@@ -1008,15 +1022,36 @@ require_once 'header.php';
   data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
   data-bs-toggle='modal' data-bs-target='#modalCertificado'>Declaração</button>";
 
+                        $reciboIds = array_values(array_filter(array_map('intval', explode(',', (string) ($campo['recibo_ids'] ?? '')))));
+                        if (!empty($reciboIds)) {
+                            $primeiroReciboId = (int) $reciboIds[0];
+                            $primeiroRotuloRecibo = count($reciboIds) > 1 ? 'Recibo 1' : 'Recibo';
                         $retorno .= " <button type='button' class='btn btn-outline-success btn-sm btn-certificado'
   data-idcol='" . $campo['id'] . "'
   data-idproj='" . (int)$id_projeto . "'
+  data-idrecibo='" . $primeiroReciboId . "'
   data-destino='recibo_digital.php'
   data-titulo='Confirmar data de nascimento'
-  data-texto='Você vai receber o recibo no email cadastrado'
+  data-texto='Você vai receber o link do " . $primeiroRotuloRecibo . " no email cadastrado'
   data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
   data-modo='email'
-  data-bs-toggle='modal' data-bs-target='#modalCertificado'>Recibo</button>";
+  data-bs-toggle='modal' data-bs-target='#modalCertificado'>" . $primeiroRotuloRecibo . "</button>";
+                            if (count($reciboIds) > 1) {
+                                foreach (array_slice($reciboIds, 1) as $indiceExtra => $idReciboExtra) {
+                                    $rotuloReciboExtra = 'Recibo ' . ($indiceExtra + 2);
+                                    $retorno .= " <button type='button' class='btn btn-outline-success btn-sm btn-certificado'
+  data-idcol='" . $campo['id'] . "'
+  data-idproj='" . (int)$id_projeto . "'
+  data-idrecibo='" . (int) $idReciboExtra . "'
+  data-destino='recibo_digital.php'
+  data-titulo='Confirmar data de nascimento'
+  data-texto='Você vai receber o link do " . $rotuloReciboExtra . " no email cadastrado'
+  data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
+  data-modo='email'
+  data-bs-toggle='modal' data-bs-target='#modalCertificado'>" . $rotuloReciboExtra . "</button>";
+                                }
+                            }
+                        }
                     }
 
                     $retorno .= "</td>";
@@ -1571,6 +1606,7 @@ require_once 'header.php';
                 $(document).on('click', '.btn-certificado', function() {
                     $('#idColabCert').val($(this).data('idcol'));
                     $('#idProjCert').val($(this).data('idproj'));
+                    $('#idReciboCert').val($(this).data('idrecibo') || '');
                     $('#docDestino').val($(this).data('destino') || 'certificado.php');
                     $('#modalCertificadoLabel').text($(this).data('titulo') || 'Confirmar data de nascimento');
                     $('#textoLiberacaoDocumento').text($(this).data('texto') || 'Informe sua data para liberar o certificado.');
@@ -1767,6 +1803,7 @@ require_once 'header.php';
 
                         const id_colaborador = $('#idColabCert').val();
                         const id_projeto = $('#idProjCert').val();
+                        const id_recibo = $('#idReciboCert').val();
                         const destino = $('#docDestino').val() || 'certificado.php';
                         const modo = $(this).data('modo') || 'download';
                         const nascimentoConvertido = displayToIsoDate((displayInput.value || '').trim());
@@ -1791,6 +1828,7 @@ require_once 'header.php';
                                 data: {
                                     id_colaborador: id_colaborador,
                                     id_projeto: id_projeto,
+                                    id_recibo: id_recibo,
                                     nascimento: nascimentoConvertido
                                 }
                             }).done(function(resp) {

@@ -51,6 +51,18 @@ function recibo_base_url()
     return $scheme . '://' . $host . rtrim($dir, '/');
 }
 
+function recibo_origem_base_url()
+{
+    global $azerutan_recibo_origem_base_url;
+
+    $configured = trim((string) ($azerutan_recibo_origem_base_url ?? ''));
+    if ($configured !== '') {
+        return rtrim($configured, '/');
+    }
+
+    return 'http://localhost/paixaodecristo/projeto';
+}
+
 function recibo_secret()
 {
     global $azerutan_recibo_secret;
@@ -108,94 +120,25 @@ function recibo_payload_verify($token)
     return $payload;
 }
 
-function recibo_data_br($dateStr)
-{
-    if (!$dateStr) {
-        return '';
-    }
-    $ts = strtotime((string) $dateStr);
-    if ($ts === false) {
-        return '';
-    }
-    return date('d/m/Y', $ts);
-}
-
-function recibo_valor_extenso($valor = 0.0)
-{
-    $valor = (float) str_replace(',', '.', (string) $valor);
-    $singular = ["centavo", "real", "mil", "milhao", "bilhao", "trilhao", "quatrilhao"];
-    $plural = ["centavos", "reais", "mil", "milhoes", "bilhoes", "trilhoes", "quatrilhoes"];
-    $c = ["", "cem", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
-    $d = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
-    $d10 = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
-    $u = ["", "um", "dois", "tres", "quatro", "cinco", "seis", "sete", "oito", "nove"];
-
-    $z = 0;
-    $valor = number_format($valor, 2, ".", ".");
-    $inteiro = explode(".", $valor);
-    for ($i = 0; $i < count($inteiro); $i++) {
-        while (strlen($inteiro[$i]) < 3) {
-            $inteiro[$i] = "0" . $inteiro[$i];
-        }
-    }
-
-    $rt = '';
-    $fim = count($inteiro) - ($inteiro[count($inteiro) - 1] > 0 ? 1 : 2);
-    for ($i = 0; $i < count($inteiro); $i++) {
-        $valorAtual = $inteiro[$i];
-        $rc = (($valorAtual > 100) && ($valorAtual < 200)) ? "cento" : $c[$valorAtual[0]];
-        $rd = ($valorAtual[1] < 2) ? "" : $d[$valorAtual[1]];
-        $ru = ($valorAtual > 0) ? (($valorAtual[1] == 1) ? $d10[$valorAtual[2]] : $u[$valorAtual[2]]) : "";
-        $r = $rc . (($rc && ($rd || $ru)) ? " e " : "") . $rd . (($rd && $ru) ? " e " : "") . $ru;
-        $t = count($inteiro) - 1 - $i;
-        $r .= $r ? " " . ($valorAtual > 1 ? $plural[$t] : $singular[$t]) : "";
-        if ($valorAtual == "000") {
-            $z++;
-        } elseif ($z > 0) {
-            $z--;
-        }
-        if (($t == 1) && ($z > 0) && ($inteiro[0] > 0)) {
-            $r .= (($z > 1) ? " de " : "") . $plural[$t];
-        }
-        if ($r) {
-            $rt .= ((($i > 0) && ($i <= $fim) && ($inteiro[0] > 0) && ($z < 1)) ? (($i < $fim) ? ", " : " e ") : " ") . $r;
-        }
-    }
-
-    return trim($rt ?: 'zero');
-}
-
-function recibo_buscar_dados(mysqli $link, $idColaborador, $idProjeto)
+function recibo_buscar_dados(mysqli $link, $idRecibo, $idColaborador, $idProjeto)
 {
     $sql = "
         SELECT
+            cx.id AS recibo_id,
+            cx.valor AS recibo_valor,
+            cx.data AS recibo_data,
+            cx.descricao AS recibo_descricao,
+            cx.detalhe_pagamento,
+            cx.recibo_numero,
             c.id,
             c.nome,
             c.email,
             c.nascimento,
-            c.cpf,
-            c.rg,
-            c.celular,
-            c.telefone,
-            c.endereco,
-            c.bairro,
-            c.cidade,
-            c.sexo,
-            c.pai,
-            c.mae,
-            c.responsavel,
-            c.responsavelrg,
-            c.responsavelcpf,
-            p.nome AS projeto_nome,
-            p.categoria AS projeto_categoria,
-            p.anoprojeto AS projeto_ano,
-            a.papel1,
-            a.cache AS cacheano,
-            a.situacao
-        FROM colaborador c
-        INNER JOIN ano_projeto a ON a.id_colaborador = c.id
-        INNER JOIN projetos p ON p.id = a.id_projeto
-        WHERE c.id = ? AND p.id = ?
+            p.nome AS projeto_nome
+        FROM caixa cx
+        INNER JOIN colaborador c ON c.id = cx.id_colaborador
+        INNER JOIN projetos p ON p.id = cx.id_projeto
+        WHERE cx.id = ? AND cx.id_colaborador = ? AND cx.id_projeto = ?
         LIMIT 1
     ";
 
@@ -204,13 +147,18 @@ function recibo_buscar_dados(mysqli $link, $idColaborador, $idProjeto)
         return null;
     }
 
-    mysqli_stmt_bind_param($stmt, 'ii', $idColaborador, $idProjeto);
+    mysqli_stmt_bind_param($stmt, 'iii', $idRecibo, $idColaborador, $idProjeto);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $dados = $result ? mysqli_fetch_assoc($result) : null;
     mysqli_stmt_close($stmt);
 
     return $dados ?: null;
+}
+
+function recibo_link_origem($idRecibo)
+{
+    return recibo_origem_base_url() . '/print_caixa_reciboPDF.php?id=' . (int) $idRecibo . '&modelo=digital';
 }
 
 function recibo_enviar_email($destinatario, $nomeDestinatario, $assunto, $html, $texto)
@@ -230,8 +178,7 @@ function recibo_enviar_email($destinatario, $nomeDestinatario, $assunto, $html, 
         $headers[] = 'Bcc: ' . $bcc;
     }
 
-    $body = $html;
-    $ok = @mail($destinatario, '=?UTF-8?B?' . base64_encode($assunto) . '?=', $body, implode("\r\n", $headers));
+    $ok = @mail($destinatario, '=?UTF-8?B?' . base64_encode($assunto) . '?=', $html, implode("\r\n", $headers));
     if (!$ok) {
         error_log('Falha ao enviar e-mail de recibo para ' . $destinatario . '. Provider esperado: HostGator.');
     }
@@ -240,11 +187,12 @@ function recibo_enviar_email($destinatario, $nomeDestinatario, $assunto, $html, 
 }
 
 if (isset($_GET['action']) && $_GET['action'] === 'solicitarAcesso') {
+    $idRecibo = filter_input(INPUT_POST, 'id_recibo', FILTER_VALIDATE_INT);
     $idColaborador = filter_input(INPUT_POST, 'id_colaborador', FILTER_VALIDATE_INT);
     $idProjeto = filter_input(INPUT_POST, 'id_projeto', FILTER_VALIDATE_INT);
     $nascimento = trim((string) ($_POST['nascimento'] ?? ''));
 
-    if (!$idColaborador || !$idProjeto || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $nascimento)) {
+    if (!$idRecibo || !$idColaborador || !$idProjeto || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $nascimento)) {
         recibo_json([
             'ok' => false,
             'msg' => 'Informe uma data de nascimento valida para continuar.'
@@ -260,7 +208,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'solicitarAcesso') {
         ], 500);
     }
 
-    $dados = recibo_buscar_dados($link, $idColaborador, $idProjeto);
+    $dados = recibo_buscar_dados($link, $idRecibo, $idColaborador, $idProjeto);
     if (!$dados) {
         recibo_json([
             'ok' => false,
@@ -286,6 +234,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'solicitarAcesso') {
 
     $payload = [
         'doc' => 'recibo_digital',
+        'r' => (int) $idRecibo,
         'c' => (int) $idColaborador,
         'p' => (int) $idProjeto,
         'exp' => time() + recibo_ttl(),
@@ -295,6 +244,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'solicitarAcesso') {
 
     $nome = trim((string) ($dados['nome'] ?? 'colaborador(a)'));
     $projetoNome = trim((string) ($dados['projeto_nome'] ?? 'Projeto Azerutan'));
+    $reciboNumero = trim((string) ($dados['recibo_numero'] ?? ''));
+    $rotuloRecibo = $reciboNumero !== '' ? $reciboNumero : ('Recibo #' . (int) $idRecibo);
     $assunto = 'Seu recibo digital - ' . $projetoNome;
     $html = '
         <html><body style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;color:#172033;padding:24px;">
@@ -305,6 +256,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'solicitarAcesso') {
             <div style="padding:24px;">
                 <p>Ola, <strong>' . recibo_h($nome) . '</strong>.</p>
                 <p>Seu recibo digital do projeto <strong>' . recibo_h($projetoNome) . '</strong> ja esta disponivel.</p>
+                <p><strong>Recibo:</strong> ' . recibo_h($rotuloRecibo) . '</p>
                 <p style="margin:24px 0;">
                     <a href="' . recibo_h($linkRecibo) . '" style="display:inline-block;background:#198754;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:bold;">Abrir recibo digital</a>
                 </p>
@@ -313,7 +265,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'solicitarAcesso') {
             </div>
         </div>
         </body></html>';
-    $texto = "Seu recibo digital esta disponivel: " . $linkRecibo;
+    $texto = 'Seu recibo digital esta disponivel: ' . $linkRecibo;
 
     if (!recibo_enviar_email($email, $nome, $assunto, $html, $texto)) {
         recibo_json([
@@ -337,9 +289,10 @@ if (!$payload || ($payload['doc'] ?? '') !== 'recibo_digital') {
     recibo_abort(403, 'Link do recibo invalido ou expirado.');
 }
 
+$idRecibo = (int) ($payload['r'] ?? 0);
 $idColaborador = (int) ($payload['c'] ?? 0);
 $idProjeto = (int) ($payload['p'] ?? 0);
-if ($idColaborador <= 0 || $idProjeto <= 0) {
+if ($idRecibo <= 0 || $idColaborador <= 0 || $idProjeto <= 0) {
     recibo_abort(400, 'Parametros do recibo invalidos.');
 }
 
@@ -349,100 +302,10 @@ if (!$link) {
     recibo_abort(500, 'Nao foi possivel abrir o recibo agora.');
 }
 
-$dados = recibo_buscar_dados($link, $idColaborador, $idProjeto);
+$dados = recibo_buscar_dados($link, $idRecibo, $idColaborador, $idProjeto);
 if (!$dados) {
     recibo_abort(404, 'Recibo nao encontrado para este colaborador.');
 }
 
-$nomeColab = strtoupper((string) ($dados['nome'] ?? ''));
-$projetoNome = (string) ($dados['projeto_nome'] ?? 'Projeto Azerutan');
-$papel = (string) ($dados['papel1'] ?? 'Colaborador(a)');
-$valor = (float) ($dados['cacheano'] ?? 0);
-$valorFormatado = 'R$ ' . number_format($valor, 2, ',', '.');
-$valorExtenso = recibo_valor_extenso($valor);
-$nascimentoBr = recibo_data_br($dados['nascimento'] ?? '');
-$dataEmissao = date('d/m/Y H:i');
-$anoProjeto = (string) ($dados['projeto_ano'] ?? date('Y'));
-$responsavel = trim((string) ($dados['responsavel'] ?? ''));
-$maiorDeIdade = false;
-if (!empty($dados['nascimento'])) {
-    try {
-        $maiorDeIdade = (new DateTime($dados['nascimento']))->diff(new DateTime('now'))->y >= 18;
-    } catch (Exception $e) {
-        $maiorDeIdade = false;
-    }
-}
-?>
-<!doctype html>
-<html lang="pt-br">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Recibo Digital</title>
-    <style>
-        body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #eef2f7; color: #172033; }
-        .wrap { max-width: 980px; margin: 26px auto; padding: 0 14px; }
-        .card { background: #fff; border-radius: 18px; border: 1px solid #d9e0ea; box-shadow: 0 14px 30px rgba(15, 23, 42, .10); overflow: hidden; }
-        .head { padding: 22px 24px; background: linear-gradient(135deg, #0f766e, #198754); color: #fff; }
-        .head h1 { margin: 0 0 6px; font-size: 28px; }
-        .head p { margin: 0; opacity: .9; }
-        .body { padding: 24px; }
-        .badge { display: inline-block; padding: 7px 12px; border-radius: 999px; background: #dcfce7; color: #166534; font-weight: 700; margin-bottom: 14px; }
-        .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
-        .meta div { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
-        .meta b { display: block; font-size: 12px; color: #475569; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
-        .texto { border: 1px solid #e5e7eb; background: #fffdf7; border-radius: 12px; padding: 18px; line-height: 1.7; }
-        .assinatura { margin-top: 24px; text-align: center; color: #334155; }
-        .assinatura .linha { margin: 22px auto 8px; width: min(360px, 100%); border-top: 1px solid #334155; }
-        .rodape { margin-top: 18px; color: #64748b; font-size: 14px; }
-        @media (max-width: 700px) { .meta { grid-template-columns: 1fr; } .head h1 { font-size: 24px; } }
-    </style>
-</head>
-<body>
-    <div class="wrap">
-        <div class="card">
-            <div class="head">
-                <h1>Recibo Digital</h1>
-                <p>Associacao Cultural Azerutan</p>
-            </div>
-            <div class="body">
-                <span class="badge">Acesso validado por link seguro</span>
-
-                <div class="meta">
-                    <div><b>Colaborador(a)</b><?php echo recibo_h($nomeColab); ?></div>
-                    <div><b>Projeto</b><?php echo recibo_h($projetoNome); ?></div>
-                    <div><b>Funcao</b><?php echo recibo_h($papel); ?></div>
-                    <div><b>Ano</b><?php echo recibo_h($anoProjeto); ?></div>
-                    <div><b>Valor</b><?php echo recibo_h($valorFormatado); ?></div>
-                    <div><b>Emitido em</b><?php echo recibo_h($dataEmissao); ?></div>
-                </div>
-
-                <div class="texto">
-                    Recebi da <strong>Associacao Cultural Azerutan</strong> a importancia de
-                    <strong><?php echo recibo_h($valorFormatado); ?> (<?php echo recibo_h($valorExtenso); ?>)</strong>,
-                    referente ao recibo digital de participacao no projeto
-                    <strong><?php echo recibo_h($projetoNome); ?></strong>,
-                    exercendo a funcao de <strong><?php echo recibo_h($papel); ?></strong>,
-                    no ano de <strong><?php echo recibo_h($anoProjeto); ?></strong>,
-                    sem exposicao publica de dados sensiveis no link de acesso.
-                    <?php if (!$maiorDeIdade && $responsavel !== '') { ?>
-                        <br><br>
-                        Responsavel legal informado no cadastro: <strong><?php echo recibo_h(strtoupper($responsavel)); ?></strong>.
-                    <?php } ?>
-                </div>
-
-                <div class="assinatura">
-                    <div class="linha"></div>
-                    <strong><?php echo recibo_h($nomeColab); ?></strong><br>
-                    Nascimento: <?php echo recibo_h($nascimentoBr); ?><br>
-                    CPF: <?php echo recibo_h((string) ($dados['cpf'] ?? 'Nao informado')); ?>
-                </div>
-
-                <div class="rodape">
-                    Este recibo foi liberado por validacao de data de nascimento e enviado para o e-mail cadastrado do colaborador.
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+header('Location: ' . recibo_link_origem($idRecibo));
+exit;
