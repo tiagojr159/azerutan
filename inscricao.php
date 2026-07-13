@@ -34,6 +34,16 @@ function coordenadaSqlOuNull($valor, $min, $max)
     return "'" . $numero . "'";
 }
 
+function emailValidoOuVazio($email)
+{
+    $email = trim((string) $email);
+    if ($email === '') {
+        return false;
+    }
+
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+}
+
 $id_projeto = 0;
 if (!empty($_POST['projeto'])) {
     $id_projeto =  $_POST['projeto'];
@@ -91,6 +101,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'cadastrar') {
     $crud->inserir("id_colaborador,id_campo,pendencia", $campo['id'] . ",6,1");
     $crud->inserir("id_colaborador,id_campo,pendencia", $campo['id'] . ",7,1");
     $crud->inserir("id_colaborador,id_campo,pendencia", $campo['id'] . ",8,1");
+    $crud->inserir("id_colaborador,id_campo,pendencia", $campo['id'] . ",10," . (emailValidoOuVazio($email) ? "0" : "1"));
 
 
     try {

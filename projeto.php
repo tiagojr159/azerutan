@@ -1007,6 +1007,16 @@ require_once 'header.php';
   data-texto='Informe sua data para liberar a declaração.'
   data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
   data-bs-toggle='modal' data-bs-target='#modalCertificado'>Declaração</button>";
+
+                        $retorno .= " <button type='button' class='btn btn-outline-success btn-sm btn-certificado'
+  data-idcol='" . $campo['id'] . "'
+  data-idproj='" . (int)$id_projeto . "'
+  data-destino='recibo_digital.php'
+  data-titulo='Confirmar data de nascimento'
+  data-texto='Você vai receber o recibo no email cadastrado'
+  data-nome=\"" . htmlspecialchars($campo['nome'], ENT_QUOTES) . "\"
+  data-modo='email'
+  data-bs-toggle='modal' data-bs-target='#modalCertificado'>Recibo</button>";
                     }
 
                     $retorno .= "</td>";
@@ -1749,6 +1759,7 @@ require_once 'header.php';
 
                     $(document).on('click', '.btn-certificado', function() {
                         resetBirthDateFields();
+                        $('#formCertificado').data('modo', $(this).data('modo') || 'download');
                     });
 
                     $('#formCertificado').off('submit').on('submit', function(e) {
@@ -1757,6 +1768,7 @@ require_once 'header.php';
                         const id_colaborador = $('#idColabCert').val();
                         const id_projeto = $('#idProjCert').val();
                         const destino = $('#docDestino').val() || 'certificado.php';
+                        const modo = $(this).data('modo') || 'download';
                         const nascimentoConvertido = displayToIsoDate((displayInput.value || '').trim());
 
                         hiddenInput.value = nascimentoConvertido;
@@ -1770,6 +1782,41 @@ require_once 'header.php';
                         }
 
                         showDownloadLoadingIndicator();
+
+                        if (modo === 'email' || destino === 'recibo_digital.php') {
+                            $.ajax({
+                                url: 'recibo_digital.php?action=solicitarAcesso',
+                                method: 'POST',
+                                dataType: 'json',
+                                data: {
+                                    id_colaborador: id_colaborador,
+                                    id_projeto: id_projeto,
+                                    nascimento: nascimentoConvertido
+                                }
+                            }).done(function(resp) {
+                                hideDownloadLoadingIndicator();
+                                if (resp.ok) {
+                                    const emailInfo = resp.email ? '\n\nE-mail de destino: ' + resp.email : '';
+                                    alert((resp.msg || 'Enviamos o link do recibo digital para o e-mail cadastrado.') + emailInfo);
+                                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                                    if (modalInstance) {
+                                        modalInstance.hide();
+                                    }
+                                    resetBirthDateFields();
+                                } else {
+                                    displayInput.classList.add('border-danger');
+                                    alert(resp.msg || 'Nao foi possivel enviar o recibo digital.');
+                                }
+                            }).fail(function(xhr) {
+                                hideDownloadLoadingIndicator();
+                                displayInput.classList.add('border-danger');
+                                const fallbackMsg = xhr && xhr.responseJSON && xhr.responseJSON.msg
+                                    ? xhr.responseJSON.msg
+                                    : 'Falha ao validar e enviar o recibo digital. Tente novamente.';
+                                alert(fallbackMsg);
+                            });
+                            return;
+                        }
 
                         $.getJSON('certificado.php', {
                             action: 'confirmaNascimento',

@@ -40,6 +40,46 @@ function coordenadaSqlOuNull($valor, $min, $max)
     return "'" . $numero . "'";
 }
 
+function emailValidoCadastro($email)
+{
+    $email = trim((string) $email);
+    if ($email === '') {
+        return false;
+    }
+
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+}
+
+function garantirPendenciaEmail($con, $id_colaborador)
+{
+    $id_colaborador = (int) $id_colaborador;
+    if ($id_colaborador <= 0) {
+        return;
+    }
+
+    $link = $con->connect();
+    if (!$link) {
+        return;
+    }
+
+    $sqlCheck = "SELECT id FROM pend_cad WHERE id_colaborador = $id_colaborador AND id_campo = 10 LIMIT 1";
+    $resCheck = mysqli_query($link, $sqlCheck);
+    if ($resCheck && mysqli_num_rows($resCheck) > 0) {
+        return;
+    }
+
+    $sqlColab = "SELECT email FROM colaborador WHERE id = $id_colaborador LIMIT 1";
+    $resColab = mysqli_query($link, $sqlColab);
+    $email = '';
+    if ($resColab && ($row = mysqli_fetch_assoc($resColab))) {
+        $email = (string) ($row['email'] ?? '');
+    }
+
+    $pendencia = emailValidoCadastro($email) ? 0 : 1;
+    $crudPend = new crud('pend_cad');
+    $crudPend->inserir("id_colaborador,id_campo,pendencia", $id_colaborador . ",10," . $pendencia);
+}
+
 /**
  * [AJUSTE PEQUENO] normaliza ids (sem mudar regra de negócio)
  */
@@ -209,6 +249,7 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
         $raca = $consulta_cad['raca'];
         $celular = $consulta_cad['celular'];
         $sexo = $consulta_cad['sexo'];
+        $email = $consulta_cad['email'];
         $comentario = $consulta_cad['comentario'];
     }
     if (!empty($_POST['raca'])) {
@@ -225,11 +266,23 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
         $telefone = $_POST['telefone'];
         $comentario .= "    " . $telefone;
     }
+    if (isset($_POST['email']) && trim((string) $_POST['email']) !== '') {
+        $emailInformado = trim((string) $_POST['email']);
+        if (!emailValidoCadastro($emailInformado)) {
+            http_response_code(400);
+            echo 'Informe um e-mail valido.';
+            die();
+        }
+        $email = $emailInformado;
+    }
     $date = date("Y-m-d H:i:s");
     $crud = new crud('pend_cad');
-    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo not in(5,6,7,8,9)");
+    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo in(1,2,3,4)");
+    if (emailValidoCadastro($email)) {
+        $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo = 10");
+    }
     $crud = new crud('colaborador');
-    $crud->atualizar("celular='$celular', telefone='$telefone', raca='$raca', sexo='$sexo', comentario='$comentario'", "id='$id_colaborador'");
+    $crud->atualizar("celular='$celular', telefone='$telefone', raca='$raca', sexo='$sexo', email='$email', comentario='$comentario'", "id='$id_colaborador'");
     die();
 }
 
@@ -300,6 +353,8 @@ function Redimensionar($imagem, $largura, $pasta, $nomeArquivo, $time)
 
 $consultaColaborador = mysqli_query($con->connect(), "SELECT * FROM colaborador where id = '" . $id_colaborador . "' order by id desc limit 1");
 $Colaborador2 = mysqli_fetch_assoc($consultaColaborador);
+
+garantirPendenciaEmail($con, $id_colaborador);
 
 require_once 'header.php';
 ?>
@@ -451,6 +506,16 @@ require_once 'header.php';
                     ?>
                         <div class="form-group">
                             <span class="status-pendente">Falta Foto para Reconhecimento Facial</span>
+                        </div>
+                    <?php
+                    }
+                    if ($id_campo == 10 && $pendencia == 1) {
+                        $botao = 1;
+                        $pendenciaAzul = 1;
+                    ?>
+                        <div class="form-group">
+                            <span class="status-pendente"><b>FALTA ATUALIZAR O E-MAIL</b>*</span>
+                            <input type="email" name="email" maxlength="250" class="form-control" placeholder="seuemail@exemplo.com" />
                         </div>
                     <?php
                     }
