@@ -1798,6 +1798,21 @@ require_once 'header.php';
                         displayInput.classList.remove('border-danger');
                     }
 
+                    function closeBirthDateModal() {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement) || bootstrap.Modal.getOrCreateInstance(modalElement);
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+
+                        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+                            backdrop.remove();
+                        });
+
+                        document.body.classList.remove('modal-open');
+                        document.body.style.removeProperty('padding-right');
+                        document.body.style.removeProperty('overflow');
+                    }
+
                     displayInput.addEventListener('input', syncFromDisplay);
                     displayInput.addEventListener('blur', syncFromDisplay);
 
@@ -1861,10 +1876,7 @@ require_once 'header.php';
                                 if (resp.ok) {
                                     const emailInfo = resp.email ? '\n\nE-mail de destino: ' + resp.email : '';
                                     alert((resp.msg || 'Enviamos o link do recibo digital para o e-mail cadastrado.') + emailInfo);
-                                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
-                                    if (modalInstance) {
-                                        modalInstance.hide();
-                                    }
+                                    closeBirthDateModal();
                                     resetBirthDateFields();
                                 } else {
                                     displayInput.classList.add('border-danger');
