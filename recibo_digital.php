@@ -135,10 +135,19 @@ function recibo_buscar_dados(mysqli $link, $idRecibo, $idColaborador, $idProjeto
             c.email,
             c.nascimento,
             p.nome AS projeto_nome
-        FROM caixa cx
-        INNER JOIN colaborador c ON c.id = cx.id_colaborador
+        FROM colaborador c
+        INNER JOIN caixa cx ON cx.id = ?
         INNER JOIN projetos p ON p.id = cx.id_projeto
-        WHERE cx.id = ? AND cx.id_colaborador = ? AND cx.id_projeto = ?
+        WHERE c.id = ?
+          AND cx.id_projeto = ?
+          AND (
+                (cx.id_colaborador IS NOT NULL AND cx.id_colaborador > 0 AND cx.id_colaborador = c.id)
+                OR (
+                    REPLACE(REPLACE(REPLACE(COALESCE(c.cpf, ''), '.', ''), '-', ''), '/', '') <> ''
+                    AND REPLACE(REPLACE(REPLACE(COALESCE(cx.favorecido_documento, ''), '.', ''), '-', ''), '/', '') =
+                        REPLACE(REPLACE(REPLACE(COALESCE(c.cpf, ''), '.', ''), '-', ''), '/', '')
+                )
+          )
         LIMIT 1
     ";
 

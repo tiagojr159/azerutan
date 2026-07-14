@@ -851,15 +851,21 @@ require_once 'header.php';
         JOIN ano_projeto a ON c.id = a.id_colaborador
         LEFT JOIN (
             SELECT
-                id_colaborador,
+                c2.id AS id_colaborador_ref,
                 id_projeto,
                 COUNT(*) AS recibo_qtd,
-                GROUP_CONCAT(id ORDER BY data ASC, id ASC SEPARATOR ',') AS recibo_ids
-            FROM caixa
-            WHERE id_colaborador IS NOT NULL
-              AND id_colaborador > 0
-            GROUP BY id_colaborador, id_projeto
-        ) rc ON rc.id_colaborador = c.id AND rc.id_projeto = a.id_projeto
+                GROUP_CONCAT(cx.id ORDER BY cx.data ASC, cx.id ASC SEPARATOR ',') AS recibo_ids
+            FROM caixa cx
+            INNER JOIN colaborador c2 ON (
+                (cx.id_colaborador IS NOT NULL AND cx.id_colaborador > 0 AND cx.id_colaborador = c2.id)
+                OR (
+                    REPLACE(REPLACE(REPLACE(COALESCE(cx.favorecido_documento, ''), '.', ''), '-', ''), '/', '') <> ''
+                    AND REPLACE(REPLACE(REPLACE(COALESCE(c2.cpf, ''), '.', ''), '-', ''), '/', '') =
+                        REPLACE(REPLACE(REPLACE(COALESCE(cx.favorecido_documento, ''), '.', ''), '-', ''), '/', '')
+                )
+            )
+            GROUP BY c2.id, cx.id_projeto
+        ) rc ON rc.id_colaborador_ref = c.id AND rc.id_projeto = a.id_projeto
         WHERE a.id_projeto = '$id_projeto'";
 
                 if ($situacao == 'PENDENTE') {
@@ -945,6 +951,8 @@ require_once 'header.php';
             c.*, 
             a.*, 
             a.cache AS cacheano,
+            COALESCE(rc.recibo_qtd, 0) AS recibo_qtd,
+            rc.recibo_ids,
             (SELECT COUNT(*) 
                FROM pend_cad pc 
               WHERE pc.id_colaborador = c.id 
@@ -952,6 +960,23 @@ require_once 'header.php';
             ) AS pendencia
         FROM colaborador c
         JOIN ano_projeto a ON c.id = a.id_colaborador
+        LEFT JOIN (
+            SELECT
+                c2.id AS id_colaborador_ref,
+                cx.id_projeto,
+                COUNT(*) AS recibo_qtd,
+                GROUP_CONCAT(cx.id ORDER BY cx.data ASC, cx.id ASC SEPARATOR ',') AS recibo_ids
+            FROM caixa cx
+            INNER JOIN colaborador c2 ON (
+                (cx.id_colaborador IS NOT NULL AND cx.id_colaborador > 0 AND cx.id_colaborador = c2.id)
+                OR (
+                    REPLACE(REPLACE(REPLACE(COALESCE(cx.favorecido_documento, ''), '.', ''), '-', ''), '/', '') <> ''
+                    AND REPLACE(REPLACE(REPLACE(COALESCE(c2.cpf, ''), '.', ''), '-', ''), '/', '') =
+                        REPLACE(REPLACE(REPLACE(COALESCE(cx.favorecido_documento, ''), '.', ''), '-', ''), '/', '')
+                )
+            )
+            GROUP BY c2.id, cx.id_projeto
+        ) rc ON rc.id_colaborador_ref = c.id AND rc.id_projeto = a.id_projeto
         WHERE a.id_projeto = '$id_projeto'";
 
                 if ($situacao == 'PENDENTE') {
