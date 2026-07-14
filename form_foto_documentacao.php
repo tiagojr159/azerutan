@@ -242,47 +242,31 @@ if (isset($_POST['acao']) && $_POST['acao'] === "cadastrar") {
 }
 
 if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
-    $id_colaborador = $_POST['id'];
-    $consulta_cad_colab = mysqli_query($con->connect(), "select * from colaborador  where id = '" . $id_colaborador . "' ");
-    while ($consulta_cad = mysqli_fetch_assoc($consulta_cad_colab)) {
-        $telefone = $consulta_cad['telefone'];
-        $raca = $consulta_cad['raca'];
-        $celular = $consulta_cad['celular'];
-        $sexo = $consulta_cad['sexo'];
-        $email = $consulta_cad['email'];
-        $comentario = $consulta_cad['comentario'];
+    $id_colaborador = (int)($_POST['id'] ?? 0);
+    if ($id_colaborador <= 0) {
+        http_response_code(400);
+        echo 'Colaborador invalido.';
+        die();
     }
-    if (!empty($_POST['raca'])) {
-        $raca = $_POST['raca'];
+
+    $emailInformado = trim((string)($_POST['email'] ?? ''));
+    if (!emailValidoCadastro($emailInformado)) {
+        http_response_code(400);
+        echo 'Informe um e-mail valido.';
+        die();
     }
-    if (!empty($_POST['celular'])) {
-        $celular = $_POST['celular'];
-        $comentario .= "    " . $celular;
-    }
-    if (!empty($_POST['sexo'])) {
-        $sexo = $_POST['sexo'];
-    }
-    if (!empty($_POST['telefone'])) {
-        $telefone = $_POST['telefone'];
-        $comentario .= "    " . $telefone;
-    }
-    if (isset($_POST['email']) && trim((string) $_POST['email']) !== '') {
-        $emailInformado = trim((string) $_POST['email']);
-        if (!emailValidoCadastro($emailInformado)) {
-            http_response_code(400);
-            echo 'Informe um e-mail valido.';
-            die();
-        }
-        $email = $emailInformado;
-    }
+
+    $link = $con->connect();
+    $email = mysqli_real_escape_string($link, $emailInformado);
+    $latitude = coordenadaSqlOuNull($_POST['latitude'] ?? null, -90, 90);
+    $longitude = coordenadaSqlOuNull($_POST['longitude'] ?? null, -180, 180);
     $date = date("Y-m-d H:i:s");
+
     $crud = new crud('pend_cad');
-    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo in(1,2,3,4)");
-    if (emailValidoCadastro($email)) {
-        $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo = 10");
-    }
+    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo = 10");
+
     $crud = new crud('colaborador');
-    $crud->atualizar("celular='$celular', telefone='$telefone', raca='$raca', sexo='$sexo', email='$email', comentario='$comentario'", "id='$id_colaborador'");
+    $crud->atualizar("email='$email', latitude=$latitude, longitude=$longitude", "id='$id_colaborador'");
     die();
 }
 
@@ -401,6 +385,8 @@ require_once 'header.php';
             <form id="atualizarCad" enctype="multipart/form-data">
                 <input type="hidden" name="acao" value="atualizar" />
                 <input type="hidden" name="id" value="<?php echo $id_colaborador; ?>" />
+                <input type="hidden" name="latitude" />
+                <input type="hidden" name="longitude" />
                 <?php
                 $botao = 0;
                 $arquivo = 0;
@@ -1255,15 +1241,16 @@ require_once 'header.php';
         });
 
         $('#btnAtualizarDados').on('click', async function() {
+            await preencherLocalizacaoFormulario('atualizarCad');
             let formData = new FormData($('#atualizarCad')[0]);
-            const response = await $.ajax({
+            await $.ajax({
                 type: 'POST',
                 url: 'form_foto_documentacao.php',
                 data: formData,
                 processData: false,
                 contentType: false,
             }).done(function(data) {
-                alert('Foto enviada com sucesso!');
+                alert('Dados atualizados com sucesso!');
                 location.reload();
             });
         });
