@@ -60,7 +60,7 @@ function recibo_origem_base_url()
         return rtrim($configured, '/');
     }
 
-    return 'http://localhost/paixaodecristo/projeto';
+    return 'https://paixaodecristodeigarassu.ki6.com.br/projeto';
 }
 
 function recibo_secret()
