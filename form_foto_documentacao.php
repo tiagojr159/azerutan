@@ -249,24 +249,63 @@ if (isset($_POST['acao']) && $_POST['acao'] == "atualizar") {
         die();
     }
 
-    $emailInformado = trim((string)($_POST['email'] ?? ''));
-    if (!emailValidoCadastro($emailInformado)) {
-        http_response_code(400);
-        echo 'Informe um e-mail valido.';
-        die();
-    }
-
     $link = $con->connect();
-    $email = mysqli_real_escape_string($link, $emailInformado);
     $latitude = coordenadaSqlOuNull($_POST['latitude'] ?? null, -90, 90);
     $longitude = coordenadaSqlOuNull($_POST['longitude'] ?? null, -180, 180);
     $date = date("Y-m-d H:i:s");
+    $camposColaborador = array(
+        "latitude=$latitude",
+        "longitude=$longitude",
+    );
+    $pendenciasResolvidas = array();
 
-    $crud = new crud('pend_cad');
-    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo = 10");
+    $camposTexto = array(
+        'raca' => 1,
+        'sexo' => 2,
+        'telefone' => 3,
+        'celular' => 4,
+    );
+
+    foreach ($camposTexto as $campo => $idCampoPendencia) {
+        if (array_key_exists($campo, $_POST)) {
+            $valor = trim((string)$_POST[$campo]);
+            if ($valor === '') {
+                http_response_code(400);
+                echo 'Preencha todos os campos obrigatorios.';
+                die();
+            }
+
+            $camposColaborador[] = $campo . "='" . mysqli_real_escape_string($link, $valor) . "'";
+            $pendenciasResolvidas[] = (int)$idCampoPendencia;
+        }
+    }
+
+    if (array_key_exists('email', $_POST)) {
+        $emailInformado = trim((string)$_POST['email']);
+        if (!emailValidoCadastro($emailInformado)) {
+            http_response_code(400);
+            echo 'Informe um e-mail valido.';
+            die();
+        }
+
+        $camposColaborador[] = "email='" . mysqli_real_escape_string($link, $emailInformado) . "'";
+        $pendenciasResolvidas[] = 10;
+    }
+
+    if (count($pendenciasResolvidas) === 0) {
+        http_response_code(400);
+        echo 'Nenhum dado para atualizar.';
+        die();
+    }
 
     $crud = new crud('colaborador');
-    $crud->atualizar("email='$email', latitude=$latitude, longitude=$longitude", "id='$id_colaborador'");
+    $crud->atualizar(implode(',', $camposColaborador), "id='$id_colaborador'");
+
+    $idsPendencias = implode(',', array_unique($pendenciasResolvidas));
+    $crud = new crud('pend_cad');
+    $crud->atualizar("pendencia='0',data='$date'", "id_colaborador='$id_colaborador' and id_campo in ($idsPendencias)");
+
+    echo 'ok';
     die();
 }
 
@@ -1252,6 +1291,9 @@ require_once 'header.php';
             }).done(function(data) {
                 alert('Dados atualizados com sucesso!');
                 location.reload();
+            }).fail(function(xhr) {
+                var mensagem = xhr.responseText || 'Nao foi possivel atualizar os dados. Tente novamente.';
+                alert(mensagem);
             });
         });
     });
