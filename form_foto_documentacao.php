@@ -1168,7 +1168,18 @@ require_once 'header.php';
         }, 15000);
 
         // 1) envia upload
-        var link = await salvar5sec(formData);
+        var link = '';
+        try {
+            link = await salvar5sec(formData);
+        } catch (error) {
+            clearTimeout(reloadTimeout);
+            clearInterval(intervaloContador);
+            fecharModal();
+            var mensagem = extrairMensagemAjax(error) || 'Houve um problema ao enviar o arquivo. Tente novamente.';
+            falar(mensagem);
+            alert(mensagem);
+            return false;
+        }
 
         // se não retornou link, deixa o fallback recarregar e avisa
         if (!link || (typeof link === 'string' && link.trim() === '')) {
@@ -1177,7 +1188,18 @@ require_once 'header.php';
         }
 
         // 2) checa se existe
-        var existe = await existe5sec(link);
+        var existe = '';
+        try {
+            existe = await existe5sec(link);
+        } catch (error) {
+            clearTimeout(reloadTimeout);
+            clearInterval(intervaloContador);
+            fecharModal();
+            var mensagemExiste = extrairMensagemAjax(error) || 'Arquivo enviado, mas nao foi possivel confirmar o processamento.';
+            falar(mensagemExiste);
+            alert(mensagemExiste);
+            return false;
+        }
 
         if (existe == 'ok') {
             clearTimeout(reloadTimeout);
@@ -1224,13 +1246,37 @@ require_once 'header.php';
             location.reload();
         }, 15000);
 
-        var link = await salvar5sec(formData);
+        var link = '';
+        try {
+            link = await salvar5sec(formData);
+        } catch (error) {
+            clearTimeout(reloadTimeout);
+            clearInterval(intervaloContador);
+            fecharModal();
+            var mensagem = extrairMensagemAjax(error) || 'Houve um problema ao enviar a foto facial. Tente novamente.';
+            falar(mensagem);
+            alert(mensagem);
+            return false;
+        }
+
         if (!link || (typeof link === 'string' && link.trim() === '')) {
             falar('Houve um problema ao enviar a foto facial. Se continuar, tente outro telefone.');
             return false;
         }
 
-        var existe = await existe5sec(link);
+        var existe = '';
+        try {
+            existe = await existe5sec(link);
+        } catch (error) {
+            clearTimeout(reloadTimeout);
+            clearInterval(intervaloContador);
+            fecharModal();
+            var mensagemExiste = extrairMensagemAjax(error) || 'Foto enviada, mas nao foi possivel confirmar o processamento.';
+            falar(mensagemExiste);
+            alert(mensagemExiste);
+            return false;
+        }
+
         if (existe == 'ok') {
             clearTimeout(reloadTimeout);
             clearInterval(intervaloContador);
@@ -1246,11 +1292,11 @@ require_once 'header.php';
 
     $(document).ready(function() {
         $('#btnEnviar').on('click', async function() {
-            startTimer();
+            await startTimer();
         });
 
         $('#btnAbrirCameraFace').on('click', async function() {
-            iniciarCameraFacial();
+            await iniciarCameraFacial();
         });
 
         $('#btnCapturarFace').on('click', function() {
@@ -1258,7 +1304,7 @@ require_once 'header.php';
         });
 
         $('#btnEnviarFace').on('click', async function() {
-            enviarFotoFacial();
+            await enviarFotoFacial();
         });
 
         $('#btnRefazerFace').on('click', function() {
@@ -1280,23 +1326,34 @@ require_once 'header.php';
         });
 
         $('#btnAtualizarDados').on('click', async function() {
-            await preencherLocalizacaoFormulario('atualizarCad');
-            let formData = new FormData($('#atualizarCad')[0]);
-            await $.ajax({
-                type: 'POST',
-                url: 'form_foto_documentacao.php',
-                data: formData,
-                processData: false,
-                contentType: false,
-            }).done(function(data) {
+            try {
+                await preencherLocalizacaoFormulario('atualizarCad');
+                let formData = new FormData($('#atualizarCad')[0]);
+                await salvar5sec(formData);
                 alert('Dados atualizados com sucesso!');
                 location.reload();
-            }).fail(function(xhr) {
-                var mensagem = xhr.responseText || 'Nao foi possivel atualizar os dados. Tente novamente.';
+            } catch (error) {
+                var mensagem = extrairMensagemAjax(error) || 'Nao foi possivel atualizar os dados. Tente novamente.';
                 alert(mensagem);
-            });
+            }
         });
     });
+
+    function extrairMensagemAjax(error) {
+        if (!error) {
+            return '';
+        }
+
+        if (error.responseText) {
+            return error.responseText;
+        }
+
+        if (error.statusText) {
+            return error.status + ' - ' + error.statusText;
+        }
+
+        return '';
+    }
 
     async function salvar5sec(formData) {
         const response = await $.ajax({
