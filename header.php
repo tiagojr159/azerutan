@@ -162,9 +162,14 @@ if (!$result) {
 
         /* grade dos projetos (responsivo) */
         .proj-card {
+            display: block;
+            position: relative;
+            z-index: 1;
             transition: transform .18s ease, box-shadow .18s ease;
             text-align: center;
             padding: 1.25rem 1rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(32, 178, 170, .18);
         }
 
         .proj-card:hover {
@@ -181,12 +186,14 @@ if (!$result) {
         }
 
         .proj-name {
+            display: block;
             font-weight: 700;
             margin: .25rem 0 0;
             font-size: 1.05rem;
         }
 
         .proj-cat {
+            display: block;
             font-size: .85rem;
             color: var(--muted);
         }

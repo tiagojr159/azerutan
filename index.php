@@ -84,11 +84,11 @@ include 'header.php';
 							 src="<?= $link_imagem_projeto; ?>../<?= $row['link_img']; ?>"
 							 alt="<?= htmlspecialchars($row['nome'], ENT_QUOTES); ?>"
 							 onerror="this.onerror=null;this.src='img/icones/projeto.png';" />
-						<div class="proj-name"><?= htmlspecialchars($row['nome']); ?></div>
-						<div class="proj-cat"><?= htmlspecialchars($row['categoria']); ?></div>
-						<div class="proj-cat text-success">
+						<span class="proj-name"><?= htmlspecialchars($row['nome']); ?></span>
+						<span class="proj-cat"><?= htmlspecialchars($row['categoria']); ?></span>
+						<span class="proj-cat text-success">
 							<b>ABERTO</b>
-						</div>
+						</span>
 					</a>
 				</div>
 			<?php endforeach; ?>
@@ -111,11 +111,11 @@ include 'header.php';
 							 src="<?= $link_imagem_projeto; ?>../<?= $row['link_img']; ?>"
 							 alt="<?= htmlspecialchars($row['nome'], ENT_QUOTES); ?>"
 							 onerror="this.onerror=null;this.src='img/icones/projeto.png';" />
-						<div class="proj-name"><?= htmlspecialchars($row['nome']); ?></div>
-						<div class="proj-cat"><?= htmlspecialchars($row['categoria']); ?></div>
-						<div class="proj-cat text-danger">
+						<span class="proj-name"><?= htmlspecialchars($row['nome']); ?></span>
+						<span class="proj-cat"><?= htmlspecialchars($row['categoria']); ?></span>
+						<span class="proj-cat text-danger">
 							<b>FECHADO</b>
-						</div>
+						</span>
 					</a>
 				</div>
 			<?php endforeach; ?>
